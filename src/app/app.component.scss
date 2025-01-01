@@ -1,0 +1,138 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.left-panel,
+.right-panel {
+  padding: 20px;
+  width: 50%;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.right-panel {
+  border-right: none;
+}
+
+.title-content {
+  display: flex;
+  align-items: center;
+}
+
+label {
+  margin-left: 10px;
+}
+
+textarea,
+input[type="text"] {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: black;
+}
+
+button {
+  padding: 10px;
+  border: none;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.7;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.header-buttons button {
+  margin-left: 5px;
+}
+
+.toggle-btn {
+  margin-right: 5px;
+  background-color: black;
+  color: white;
+}
+
+.toggle-btn.active {
+  background-color: #ffc107;
+  color: black;
+}
+
+.field-content {
+  margin-top: 10px;
+}
+
+.delete-btn {
+  margin-left: 2px !important;
+  background-color: white;
+  color: red;
+  min-width: 40px;
+  padding: 4px;
+}
+
+#copy-btn {
+  margin: 20px 0;
+  background-color: black;
+  color: white;
+}
+
+#copy-btn.success {
+  background-color: #ffc107;
+  color: black;
+}
+
+/* 右下に固定されるコピペボタンのスタイル */
+.fixed-copy-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: black;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.fixed-copy-btn.success {
+  background-color: #ffc107;
+  color: black;
+}
