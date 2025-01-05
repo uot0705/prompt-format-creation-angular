@@ -88,12 +88,13 @@
       <div [innerHTML]="mainQuestionOutputForDisplay()"></div>
       <div [innerHTML]="fieldsOutputForDisplay()"></div>
     </div>
-    <button
+    
+  </div>
+  <button
       (click)="copyToClipboard()"
       class="fixed-copy-btn"
       [class.success]="copySuccess()"
     >
       {{ copySuccess() ? "コピペ成功" : "コピペ" }}
     </button>
-  </div>
 </div>

@@ -22,21 +22,39 @@ body {
   overflow: hidden;
 }
 
-.left-panel,
+.left-panel {
+  padding: 20px;
+  width: 50%;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
+}
+
 .right-panel {
   padding: 20px;
   width: 50%;
   border-right: 1px solid #ddd;
   overflow-y: auto;
+  border-right: none;
+
+  @media (max-width: 600px) {
+    display: none;
+    width: auto;
+  }
 }
 
-.right-panel {
-  border-right: none;
-}
+
 
 .title-content {
   display: flex;
   align-items: center;
+
+  @media (max-width: 600px) {
+    display: block;
+  }
 }
 
 label {
