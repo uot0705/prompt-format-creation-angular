@@ -126,7 +126,16 @@ GitHub Pages に対応するため、以下の設定を行います。
 }
 ```
 
-### 4. GitHub Actions 用の設定
+### 4. ローカルで `docs` フォルダを作成し、手動でビルドして GitHub に反映させる
+```bash
+ng build --output-path docs --base-href /<repository-name>/
+touch docs/.nojekyll
+git add docs/
+git commit -m "Build docs folder"
+git push origin main
+```
+
+### 5. GitHub Actions 用の設定
 以下の内容で `.github/workflows/gh-pages.yml` ファイルを作成します:
 
 ```yaml
@@ -169,12 +178,12 @@ jobs:
           publish_dir: docs
 ```
 
-### 5. GitHub Pages の設定
+### 6. GitHub Pages の設定
 1. GitHub のリポジトリ設定に移動します。
 2. 左メニューの「Pages」をクリックします。
 3. Source を「GitHub Actions」に設定します。
 
-### 6. アクセス確認
+### 7. アクセス確認
 1. 公開されたURLを確認します。
    ```
    https://<username>.github.io/<repository-name>/
