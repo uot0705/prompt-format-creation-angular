@@ -49,7 +49,7 @@ Angular プロジェクトが SSR (サーバーサイドレンダリング) 設�
 ### **解決方法**
 1. ビルドコマンドを以下のように実行してください:
    ```bash
-   ng build --output-path docs --base-href /<repository-name>/
+   ng build --output-path docs --base-href prompt-format-creation-angular
    ```
 2. `docs`フォルダ直下に`index.html`が生成されていることを確認してください。
 </details>
