@@ -1,5 +1,5 @@
-import { Component, signal, computed } from '@angular/core';
-import { FormsModule } from '@angular/forms'; // FormsModuleをインポート
+import { Component, computed, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { marked } from 'marked';
 
 interface Field {
@@ -9,65 +9,152 @@ interface Field {
   expanded: boolean;
 }
 
+type PresetType =
+  | 'question'
+  | 'error'
+  | 'variableName'
+  | 'refactor'
+  | 'review'
+  | 'organize'
+  | 'analyze';
+
 @Component({
   selector: 'app-root',
-  standalone: true, // スタンドアロンコンポーネントを宣言
-  imports: [FormsModule], // 必要なモジュールをここでインポート
+  standalone: true,
+  imports: [FormsModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  private fieldObject: Field = {
+  private readonly fieldTemplate: Field = {
     id: Date.now(),
     title: '',
     content: '',
     expanded: true,
   };
 
-  protected mainQuestion = signal<string>('');
-  protected fields = signal<Field[]>([this.fieldObject]);
-  protected copySuccess = signal<boolean>(false);
+  // メイン質問とフィールド群（Signalで管理）
+  protected readonly mainQuestion = signal('');
+  protected readonly fields = signal<Field[]>([this.fieldTemplate]);
 
-  protected mainQuestionOutput = computed(() => marked.parse(this.mainQuestion()));
-  protected fieldsOutputForDisplay = computed(() =>
+  // 選択中のプリセット
+  protected readonly selectedPreset = signal<PresetType | null>(null);
+
+  // コピペボタンの状態
+  protected readonly copySuccess = signal(false);
+
+  // 右パネル表示用
+  protected readonly mainQuestionOutput = computed(() =>
+    marked.parse(this.mainQuestion())
+  );
+
+  protected readonly fieldsOutputForDisplay = computed(() =>
     this.fields()
       .map(
-        (field) => 
-          `<div><h2>${field.title}</h2></div>
-           <pre>${field.content}</pre>`
+        (field) =>
+          `<section class="preview-field">
+             <h2>${field.title}</h2>
+             <pre><code>${field.content}</code></pre>
+           </section>`
       )
       .join('')
   );
-  
-  protected mainQuestionOutputForDisplay = computed(() =>
-    this.mainQuestion()
-  );
 
-  
+  protected onPresetClick(type: PresetType): void {
+    // すでに選択されている場合も含め、常に「そのプリセット1つだけON」にする
+    this.selectedPreset.set(type);
+    this.applyPreset(type);
+  }
 
-  protected toggleCheckbox(type: string): void {
+  private applyPreset(type: PresetType): void {
     this.resetForm();
+
     switch (type) {
-      case 'question':
+      case 'question': {
         this.mainQuestion.set('以下の質問に回答してください');
         this.addField('質問内容');
         break;
-      case 'error':
+      }
+      case 'error': {
         this.mainQuestion.set('以下のエラー内容を解決してください');
         this.addField('エラー内容');
-        this.addField('出力内容', 'エラーの詳細情報:');
+        this.addField(
+          '出力内容',
+          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+            '・エラーの概要:\n' +
+            '・エラーの原因:\n' +
+            '・エラーの解決策:\n' +
+            '・解決策する為の具体的な方法(コードの修正の場合はコードを書く):'
+        );
         break;
-      case 'variableName':
+      }
+      case 'variableName': {
         this.mainQuestion.set(
-          '以下の変数の使い道に合う変数名を5個提案してください...'
+          '以下の変数の使い道に合う変数名を5個提案してください。\n' +
+            '提案する変数名は「シンプルな単語を使い」「意味が理解ができる」、「長くなりすぎない簡潔」な命名にしてください'
         );
         this.addField('変数の使い道');
-        this.addField('出力内容(以下の内容で5個)', '変数名:');
+        this.addField(
+          '出力内容(以下の内容で5個)',
+          '・変数名:\n・おすすめの理由：'
+        );
         break;
-      case 'refactor':
+      }
+      case 'refactor': {
         this.mainQuestion.set('以下のリファクタをしてください');
-        this.addField();
+        this.addField(
+          '出力内容',
+          'リファクタしたほうが良い箇所を「3箇所」選んでください。その3箇所の現在のコードを出力して、以下を「エンジニア初心者でもわかりやすいように」教えてください。\n' +
+            '・なぜリファクタしたほうが良いか\n' +
+            '・どのようなリファクタをすればいいのか\n' +
+            '・リファクタしたコード'
+        );
         break;
+      }
+      case 'review': {
+        this.mainQuestion.set(
+          '上司からのレビュー指摘内容を以下の「出力内容」に沿って回答してください'
+        );
+        this.addField(
+          '出力内容',
+          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+            '・上司からのレビュー指摘内容の概要\n' +
+            '・レビュー内容に「なぜ」修正した方がいいのかの詳細\n' +
+            '・現状のコードの修正箇所を箇条書きで書き出す\n' +
+            '・上記の修正箇所の修正コードを提供してください'
+        );
+        this.addField('上司からのレビュー指摘内容');
+        this.addField('対象コード');
+        break;
+      }
+      case 'organize': {
+        this.mainQuestion.set(
+          '以下のやりとりを出力回答に沿って回答してください'
+        );
+        this.addField(
+          '出力内容',
+          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+            '・やりとりの概要\n' +
+            '・結果どうなったのか\n' +
+            '・上記の結果に至るまでの経緯を説明してください'
+        );
+        this.addField('やりとり');
+        break;
+      }
+      case 'analyze': {
+        this.mainQuestion.set(
+          '以下の出力回答に沿ってコードの解析をしてください'
+        );
+        this.addField(
+          '出力内容',
+          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+            '・対象コードの全体的な概要\n' +
+            '・対象コードの変数や関数ごとに処理を全て時系列で詳細におしえて\n' +
+            '・対象コードの押さえておくべきホポイント3つ'
+        );
+        this.addField('対象のコード');
+        break;
+      }
     }
   }
 
@@ -96,13 +183,13 @@ export class AppComponent {
 
   protected addField(title = '', content = ''): void {
     const newField: Field = {
-      ...this.fieldObject, // fieldObjectをコピーしてベースとする
-      id: Date.now(), // 新しいフィールド用のIDを生成
-      title: title || this.fieldObject.title, // 引数で指定があればそれを使用
-      content: content || this.fieldObject.content, // 引数で指定があればそれを使用
+      ...this.fieldTemplate,
+      id: Date.now(),
+      title: title || this.fieldTemplate.title,
+      content: content || this.fieldTemplate.content,
     };
-  
-    this.fields.update((fields) => [...fields, newField]); // 新しいフィールドを追加
+
+    this.fields.update((fields) => [...fields, newField]);
   }
 
   protected removeField(field: Field): void {
@@ -134,22 +221,22 @@ export class AppComponent {
 
   protected copyToClipboard(): void {
     const mainQuestionFormatted = this.mainQuestion().trim();
-  
+
     const fieldsFormatted = this.fields()
-      .map(
-        (field) =>
-          `## ${field.title}\n\`\`\`\n${field.content}\n\`\`\``
-      )
+      .map((field) => `## ${field.title}\n\`\`\`\n${field.content}\n\`\`\``)
       .join('\n\n');
-  
+
     const outputText = `${mainQuestionFormatted}\n\n${fieldsFormatted}`;
-    
+
     navigator.clipboard.writeText(outputText).then(() => {
       this.copySuccess.set(true);
       setTimeout(() => this.copySuccess.set(false), 2000);
     });
   }
-  
+
+  protected setCommonTitleWord(fieldId: number, word: string): void {
+    this.updateField(fieldId, word, 'title');
+  }
 
   private resetForm(): void {
     this.mainQuestion.set('');

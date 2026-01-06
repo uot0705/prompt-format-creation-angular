@@ -7,8 +7,8 @@ body {
   margin: 0;
   background-color: #f5f5f5;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: stretch;
+  align-items: stretch;
   height: 100vh;
   overflow: hidden;
 }
@@ -45,7 +45,6 @@ body {
     width: auto;
   }
 }
-
 
 
 .title-content {
@@ -153,4 +152,30 @@ button:hover {
 .fixed-copy-btn.success {
   background-color: #ffc107;
   color: black;
+}
+
+.common-words-content {
+  display: flex;
+  margin: 8px 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.common-words-group {
+  display: flex;
+  gap: 4px;
+}
+
+.common-words-general button {
+  background-color: #333;
+  color: #fff;
+}
+
+.common-words-file button {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.preview-field {
+  margin-bottom: 16px;
 }

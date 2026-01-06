@@ -3,30 +3,73 @@
     <form>
       <div class="title-content">
         <h3>質問フォーム</h3>
-        <label
-          ><input type="checkbox" (change)="toggleCheckbox('question')" />
-          質問</label
-        >
-        <label
-          ><input type="checkbox" (change)="toggleCheckbox('error')" />
-          エラー質問</label
-        >
-        <label
-          ><input type="checkbox" (change)="toggleCheckbox('variableName')" />
-          変数名の提案</label
-        >
-        <label
-          ><input type="checkbox" (change)="toggleCheckbox('refactor')" />
-          リファクタ</label
-        >
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'question'"
+            (click)="onPresetClick('question')"
+          />
+          質問
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'error'"
+            (click)="onPresetClick('error')"
+          />
+          エラー相談
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'variableName'"
+            (click)="onPresetClick('variableName')"
+          />
+          変数名の提案
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'refactor'"
+            (click)="onPresetClick('refactor')"
+          />
+          リファクタ
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'review'"
+            (click)="onPresetClick('review')"
+          />
+          レビュー指摘
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'organize'"
+            (click)="onPresetClick('organize')"
+          />
+          やりとり整理
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedPreset() === 'analyze'"
+            (click)="onPresetClick('analyze')"
+          />
+          コード分析
+        </label>
       </div>
+
       <textarea
-        [(ngModel)]="mainQuestion"
+        id="main-question"
         name="mainQuestion"
         rows="8"
+        [ngModel]="mainQuestion()"
+        (ngModelChange)="mainQuestion.set($event)"
       ></textarea>
 
-      <div>
+      <div id="fields-container">
         @for (field of fields(); track field.id) {
         <div class="field">
           <div class="field-header">
@@ -39,6 +82,7 @@
               {{ field.expanded ? "▲" : "▼" }}
             </button>
             <input
+              class="title-input"
               [value]="field.title"
               (input)="handleFieldChange($event, field.id, 'title')"
               name="field-title"
@@ -57,9 +101,54 @@
               </button>
             </div>
           </div>
+
+          <div class="common-words-content">
+            <div class="common-words-group common-words-general">
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, '出力内容')"
+              >
+                出力内容
+              </button>
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, 'コード')"
+              >
+                コード
+              </button>
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, 'エラー内容')"
+              >
+                エラー内容
+              </button>
+            </div>
+            <div class="common-words-group common-words-file">
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, 'TSファイル')"
+              >
+                TSファイル
+              </button>
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, 'HTMLファイル')"
+              >
+                HTMLファイル
+              </button>
+              <button
+                type="button"
+                (click)="setCommonTitleWord(field.id, 'CSSファイル')"
+              >
+                CSSファイル
+              </button>
+            </div>
+          </div>
+
           @if (field.expanded) {
           <div class="field-content">
             <textarea
+              class="field-content-textarea"
               [value]="field.content"
               (input)="handleFieldChange($event, field.id, 'content')"
               name="field-content"
@@ -72,12 +161,15 @@
         }
       </div>
 
-      <button type="button" (click)="addField()">追加</button>
+      <button id="add-field-btn" type="button" (click)="addField()">
+        追加
+      </button>
     </form>
   </div>
 
   <div class="right-panel">
     <button
+      id="copy-btn"
       (click)="copyToClipboard()"
       class="copy-btn"
       [class.success]="copySuccess()"
@@ -85,16 +177,17 @@
       {{ copySuccess() ? "コピペ成功" : "コピペ" }}
     </button>
     <div id="output">
-      <div [innerHTML]="mainQuestionOutputForDisplay()"></div>
-      <div [innerHTML]="fieldsOutputForDisplay()"></div>
+      <div id="main-question-output" [innerHTML]="mainQuestionOutput()"></div>
+      <div id="fields-output" [innerHTML]="fieldsOutputForDisplay()"></div>
     </div>
-    
   </div>
+
   <button
-      (click)="copyToClipboard()"
-      class="fixed-copy-btn"
-      [class.success]="copySuccess()"
-    >
-      {{ copySuccess() ? "コピペ成功" : "コピペ" }}
-    </button>
+    id="fixed-copy-btn"
+    (click)="copyToClipboard()"
+    class="fixed-copy-btn"
+    [class.success]="copySuccess()"
+  >
+    {{ copySuccess() ? "コピペ成功" : "コピペ" }}
+  </button>
 </div>
