@@ -1,5 +1,49 @@
 # Angular 19 を GitHub Pages にアップロードする環境構築方法
 
+## このリポジトリでやっていること（概要）
+
+- Angular 19 で作成した **プロンプト作成支援ツール**（左にフォーム、右に Markdown プレビュー）のソースコードと、
+- それを GitHub Pages で公開するための **ビルド成果物 (`docs/` 配下)** を同じリポジトリで管理しています。
+
+GitHub Pages の公開対象は `main` ブランチの `docs/` ディレクトリです。  
+ローカルで Angular のソースを変更したら、`npm run build:gh-pages` で `docs/` を更新し、`src` と `docs` をまとめてコミット＆プッシュする運用になっています。
+
+---
+
+## 今後の更新フロー（開発〜GitHub Pages 反映）
+
+Angular のソースを変更したあと、GitHub Pages に反映するまでの手順は以下です。
+
+1. **ソースコードの変更**
+   - `src/app/...` などを編集して機能追加・修正を行う。
+
+2. **（任意）ローカル確認**
+   ```bash
+   npm start
+   ```
+   でローカルサーバーを立ち上げ、画面を確認する。
+
+3. **GitHub Pages 用にビルド**
+   ```bash
+   npm run build:gh-pages
+   ```
+   - `docs/` ディレクトリに、GitHub Pages で配信される最新のビルド成果物が生成される。
+
+4. **コミット**
+   ```bash
+   git add src docs
+   git commit -m "feat: ○○を修正"
+   ```
+   - アプリ本体（`src`）と `docs/` を **同じコミットに含める** のが推奨。
+
+5. **プッシュ**
+   ```bash
+   git push
+   ```
+   - GitHub Pages の設定で「Source: `main` / Folder: `docs`」にしておけば、このプッシュだけでサイトが更新される。
+
+---
+
 ## 前提知識
 1. **GitHub Pages**  
    GitHub Pages は静的サイトをホスティングするサービスで、Angular アプリをデプロイする際は静的なビルド成果物が必要です。
