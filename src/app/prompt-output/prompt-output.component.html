@@ -1,0 +1,69 @@
+<div class="right-panel-body">
+  <div class="copy-actions">
+    <button
+      id="copy-btn"
+      (click)="copyToClipboard()"
+      class="copy-btn"
+      [class.success]="copySuccess()"
+    >
+      {{ copySuccess() ? "コピペ成功" : "コピペ" }}
+    </button>
+    <button id="history-btn" type="button" (click)="openHistoryModal()">
+      履歴
+    </button>
+  </div>
+  <div id="output">
+    <div id="main-question-output" [innerHTML]="mainQuestionOutput()"></div>
+    <div id="fields-output" [innerHTML]="fieldsOutputForDisplay()"></div>
+  </div>
+</div>
+
+<button
+  id="fixed-copy-btn"
+  (click)="copyToClipboard()"
+  class="fixed-copy-btn"
+  [class.success]="copySuccess()"
+>
+  {{ copySuccess() ? "コピペ成功" : "コピペ" }}
+</button>
+
+@if (historyOpen()) {
+<div class="history-overlay" (click)="closeHistoryModal()">
+  <div class="history-modal" (click)="$event.stopPropagation()">
+    <div class="history-modal-header">
+      <h4>履歴</h4>
+      <button
+        type="button"
+        class="history-close-btn"
+        (click)="closeHistoryModal()"
+      >
+        ×
+      </button>
+    </div>
+    <div class="history-list">
+      @if (historyItems().length === 0) {
+      <div class="history-empty">履歴はまだありません</div>
+      } @else { @for (item of historyItems(); track item.text) {
+      <button
+        type="button"
+        class="history-item"
+        (mouseenter)="showHistoryPreview(item, $event)"
+        (mouseleave)="hideHistoryPreview()"
+        (click)="applyHistory(item)"
+      >
+        {{ formatHistoryLabel(item) }}
+      </button>
+      } }
+    </div>
+  </div>
+  @if (historyPreview()) {
+  <div
+    class="history-preview-tooltip"
+    [style.top.px]="historyPreview()!.top"
+    [style.left.px]="historyPreview()!.left"
+  >
+    {{ historyPreview()!.text }}
+  </div>
+  }
+</div>
+}

@@ -1,0 +1,78 @@
+.title-content {
+  display: flex;
+  align-items: center;
+
+  @media (max-width: 600px) {
+    display: block;
+  }
+}
+
+label {
+  margin-left: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.header-buttons button {
+  margin-left: 5px;
+}
+
+.toggle-btn {
+  margin-right: 5px;
+  background-color: black;
+  color: white;
+}
+
+.toggle-btn.active {
+  background-color: #ffc107;
+  color: black;
+}
+
+.field-content {
+  margin-top: 10px;
+}
+
+.delete-btn {
+  margin-left: 2px !important;
+  background-color: white;
+  color: red;
+  min-width: 40px;
+  padding: 4px;
+}
+
+.common-words-content {
+  display: flex;
+  margin: 8px 0;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.common-words-group {
+  display: flex;
+  gap: 4px;
+}
+
+.common-words-general button {
+  background-color: #333;
+  color: #fff;
+}
+
+.common-words-file button {
+  background-color: #007bff;
+  color: #fff;
+}
