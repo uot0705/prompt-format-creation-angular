@@ -15,25 +15,32 @@ GitHub Pages の公開対象は `main` ブランチの `docs/` ディレクト�
 Angular のソースを変更したあと、GitHub Pages に反映するまでの手順は以下です。
 
 1. **ソースコードの変更**
+
    - `src/app/...` などを編集して機能追加・修正を行う。
 
 2. **（任意）ローカル確認**
+
    ```bash
    npm start
    ```
+
    でローカルサーバーを立ち上げ、画面を確認する。
 
 3. **GitHub Pages 用にビルド**
+
    ```bash
    npm run build:gh-pages
    ```
+
    - `docs/` ディレクトリに、GitHub Pages で配信される最新のビルド成果物が生成される。
 
 4. **コミット**
+
    ```bash
    git add src docs
    git commit -m "feat: ○○を修正"
    ```
+
    - アプリ本体（`src`）と `docs/` を **同じコミットに含める** のが推奨。
 
 5. **プッシュ**
@@ -45,14 +52,15 @@ Angular のソースを変更したあと、GitHub Pages に反映するまで�
 ---
 
 ## 前提知識
+
 1. **GitHub Pages**  
    GitHub Pages は静的サイトをホスティングするサービスで、Angular アプリをデプロイする際は静的なビルド成果物が必要です。
 
 2. **Angular CLI**  
    Angular CLI は Angular プロジェクトを作成し、ビルドやサーブを簡単に行えるツールです。
 
-3. **必要なツール**  
-   - Node.js (LTS推奨)
+3. **必要なツール**
+   - Node.js (LTS 推奨)
    - Angular CLI (プロジェクト作成やビルドに使用)
    - Git (リポジトリの管理に使用)
 
@@ -63,23 +71,29 @@ Angular のソースを変更したあと、GitHub Pages に反映するまで�
 <details>
 <summary>エラー: ng: command not found (Angular CLI インストール時)</summary>
 
-### **状況**  
+### **状況**
+
 Angular CLI がインストールされていない場合に発生します。
 
 ### **解決方法**
+
 以下のコマンドで Angular CLI をグローバルインストールしてください:
+
 ```bash
 npm install -g @angular/cli
 ```
+
 </details>
 
 <details>
 <summary>エラー: The "server" option is required when "outputMode" is set to "server" (Angular ビルド時)</summary>
 
-### **状況**  
+### **状況**
+
 Angular プロジェクトが SSR (サーバーサイドレンダリング) 設定になっている場合に発生します。
 
 ### **解決方法**
+
 1. `angular.json`を開き、`"builder": "@angular-devkit/build-angular:browser"`に変更してください。
 2. `"main": "src/main.ts"`を正しく指定してください。
 </details>
@@ -87,10 +101,12 @@ Angular プロジェクトが SSR (サーバーサイドレンダリング) 設�
 <details>
 <summary>エラー: 404 File not found (GitHub Pages デプロイ後)</summary>
 
-### **状況**  
+### **状況**
+
 `index.html`が正しい場所に配置されていない場合に発生します。
 
 ### **解決方法**
+
 1. ビルドコマンドを以下のように実行してください:
    ```bash
    ng build --output-path docs --base-href prompt-format-creation-angular
@@ -101,15 +117,19 @@ Angular プロジェクトが SSR (サーバーサイドレンダリング) 設�
 <details>
 <summary>エラー: Node.js のバージョンエラー (環境構築時)</summary>
 
-### **状況**  
+### **状況**
+
 Node.js のバージョンが適切でない場合に発生します。
 
 ### **解決方法**
+
 Node.js のバージョンを LTS に設定してください。以下のコマンドで適切なバージョンをインストールできます:
+
 ```bash
 nvm install 18
 nvm use 18
 ```
+
 </details>
 
 ---
@@ -117,19 +137,25 @@ nvm use 18
 ## 環境構築方法
 
 ### 1. GitHub リポジトリの作成
+
 1. GitHub 上で新しいリポジトリを作成します。
 2. プロジェクト名は自由に設定してください (例: `angular-github-pages-demo`)。
 
 ### 2. Angular プロジェクトの作成
+
 以下のコマンドで新しい Angular プロジェクトを作成します:
+
 ```bash
 ng new <project-name>
 ```
+
 プロジェクト作成中に以下を選択:
-- CSSの選択: `SCSS` (推奨)
+
+- CSS の選択: `SCSS` (推奨)
 - Routing: 必要に応じて選択
 
 ### 3. `angular.json`の修正
+
 GitHub Pages に対応するため、以下の設定を行います。
 
 1. `angular.json`を開き、`build`の箇所を以下を修正または追加します:
@@ -171,6 +197,7 @@ GitHub Pages に対応するため、以下の設定を行います。
 ```
 
 ### 4. ローカルで `docs` フォルダを作成し、手動でビルドして GitHub に反映させる
+
 ```bash
 ng build --output-path docs --base-href /<repository-name>/
 touch docs/.nojekyll
@@ -180,6 +207,7 @@ git push origin main
 ```
 
 ### 5. GitHub Actions 用の設定
+
 以下の内容で `.github/workflows/gh-pages.yml` ファイルを作成します:
 
 ```yaml
@@ -223,12 +251,14 @@ jobs:
 ```
 
 ### 6. GitHub Pages の設定
+
 1. GitHub のリポジトリ設定に移動します。
 2. 左メニューの「Pages」をクリックします。
 3. Source を「GitHub Actions」に設定します。
 
 ### 7. アクセス確認
-1. 公開されたURLを確認します。
+
+1. 公開された URL を確認します。
    ```
    https://<username>.github.io/<repository-name>/
    ```

@@ -1,6 +1,11 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { marked } from 'marked';
+import {
+  type CopyHistoryItem,
+  type HistorySnapshot,
+  copyHistoryCache,
+} from './copy-history-cache';
 
 interface Field {
   id: number;
@@ -17,6 +22,12 @@ type PresetType =
   | 'review'
   | 'organize'
   | 'analyze';
+
+type HistoryPreview = {
+  text: string;
+  top: number;
+  left: number;
+};
 
 @Component({
   selector: 'app-root',
@@ -42,6 +53,12 @@ export class AppComponent {
 
   // コピペボタンの状態
   protected readonly copySuccess = signal(false);
+
+  protected readonly historyOpen = signal(false);
+  protected readonly historyItems = signal<CopyHistoryItem[]>(
+    copyHistoryCache.getHistory()
+  );
+  protected readonly historyPreview = signal<HistoryPreview | null>(null);
 
   // 右パネル表示用
   protected readonly mainQuestionOutput = computed(() =>
@@ -228,10 +245,22 @@ export class AppComponent {
 
     const outputText = `${mainQuestionFormatted}\n\n${fieldsFormatted}`;
 
-    navigator.clipboard.writeText(outputText).then(() => {
-      this.copySuccess.set(true);
-      setTimeout(() => this.copySuccess.set(false), 2000);
-    });
+    const snapshot: HistorySnapshot = {
+      mainQuestion: this.mainQuestion(),
+      fields: this.fields().map((field) => ({ ...field })),
+    };
+
+    navigator.clipboard
+      .writeText(outputText)
+      .then(() => {
+        this.copySuccess.set(true);
+        setTimeout(() => this.copySuccess.set(false), 2000);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        const next = copyHistoryCache.addHistory(outputText, snapshot);
+        this.historyItems.set(next);
+      });
   }
 
   protected setCommonTitleWord(fieldId: number, word: string): void {
@@ -241,5 +270,78 @@ export class AppComponent {
   private resetForm(): void {
     this.mainQuestion.set('');
     this.fields.set([]);
+  }
+
+  protected openHistoryModal(): void {
+    this.historyOpen.set(true);
+    this.historyPreview.set(null);
+    this.historyItems.set(copyHistoryCache.getHistory());
+  }
+
+  protected closeHistoryModal(): void {
+    this.historyOpen.set(false);
+    this.historyPreview.set(null);
+  }
+
+  protected formatHistoryLabel(item: CopyHistoryItem): string {
+    const date = new Date(item.createdAt);
+    const dateLabel = `${date.getFullYear()}/${String(
+      date.getMonth() + 1
+    ).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')} ${String(
+      date.getHours()
+    ).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    const snippet = this.getHistorySnippet(item.text);
+    return `${dateLabel} / ${snippet}`;
+  }
+
+  protected showHistoryPreview(item: CopyHistoryItem, event: MouseEvent): void {
+    const target = event.currentTarget as HTMLElement;
+    if (!target) {
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const maxWidth = 260;
+    const maxHeight = 180;
+    let left = rect.right + 12;
+    if (left + maxWidth > window.innerWidth - 12) {
+      left = Math.max(12, rect.left - maxWidth - 12);
+    }
+
+    let top = rect.top + rect.height / 2 - maxHeight / 2;
+    top = Math.max(12, Math.min(top, window.innerHeight - maxHeight - 12));
+
+    this.historyPreview.set({
+      text: item.text,
+      top,
+      left,
+    });
+  }
+
+  protected hideHistoryPreview(): void {
+    this.historyPreview.set(null);
+  }
+
+  protected applyHistory(item: CopyHistoryItem): void {
+    this.resetForm();
+
+    if (item.snapshot) {
+      this.mainQuestion.set(item.snapshot.mainQuestion);
+      this.fields.set(item.snapshot.fields.map((field) => ({ ...field })));
+    } else {
+      this.mainQuestion.set(item.text);
+      this.fields.set([]);
+    }
+
+    this.closeHistoryModal();
+  }
+
+  private getHistorySnippet(text: string): string {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return '（空）';
+    }
+
+    return trimmed.slice(0, 15);
   }
 }

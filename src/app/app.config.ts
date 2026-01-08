@@ -3,7 +3,10 @@ import { COMPOSITION_BUFFER_MODE } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import {
+  provideClientHydration,
+  withEventReplay,
+} from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -11,5 +14,5 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
     { provide: COMPOSITION_BUFFER_MODE, useValue: false },
-  ]
+  ],
 };
