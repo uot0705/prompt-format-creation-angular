@@ -212,8 +212,7 @@
       <div class="history-list">
         @if (historyItems().length === 0) {
         <div class="history-empty">履歴はまだありません</div>
-        } @else {
-        @for (item of historyItems(); track item.text) {
+        } @else { @for (item of historyItems(); track item.text) {
         <button
           type="button"
           class="history-item"
@@ -223,8 +222,7 @@
         >
           {{ formatHistoryLabel(item) }}
         </button>
-        }
-        }
+        } }
       </div>
     </div>
     @if (historyPreview()) {
