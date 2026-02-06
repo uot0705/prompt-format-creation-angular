@@ -24,6 +24,8 @@ export class PromptFormStore {
     content: '',
     expanded: true,
   };
+  // フィールドIDの採番を行う。
+  private nextFieldId = 1;
 
   // メイン質問の本文を保持する。
   readonly mainQuestion = signal('');
@@ -46,6 +48,7 @@ export class PromptFormStore {
   // フィールド配列を丸ごと入れ替える。
   setFields(fields: Field[]): void {
     this.fields.set(fields);
+    this.updateNextFieldId(fields);
   }
 
   // 指定フィールドのタイトル/本文を更新する。
@@ -125,11 +128,17 @@ export class PromptFormStore {
   // 新しいフィールドを作成する。
   private createField(title = '', content = ''): Field {
     return {
-      id: Date.now(),
+      id: this.nextFieldId++,
       title: title || this.emptyField.title,
       content: content || this.emptyField.content,
       expanded: this.emptyField.expanded,
     };
+  }
+
+  // 既存フィールドから次のIDを更新する。
+  private updateNextFieldId(fields: Field[]): void {
+    const maxId = fields.reduce((max, field) => Math.max(max, field.id), 0);
+    this.nextFieldId = Math.max(this.nextFieldId, maxId + 1);
   }
 
   // 選択プリセットに応じた入力内容を流し込む。

@@ -59,13 +59,28 @@
     </label>
   </div>
 
-  <textarea
-    id="main-question"
-    name="mainQuestion"
-    rows="8"
-    [ngModel]="mainQuestion()"
-    (ngModelChange)="mainQuestion.set($event)"
-  ></textarea>
+  <div class="main-question">
+    <textarea
+      id="main-question"
+      name="mainQuestion"
+      rows="8"
+      [ngModel]="mainQuestion()"
+      (ngModelChange)="mainQuestion.set($event)"
+      readonly
+    ></textarea>
+    <button
+      type="button"
+      class="edit-trigger"
+      aria-label="質問内容を編集"
+      (click)="openMainQuestionModal()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
+        />
+      </svg>
+    </button>
+  </div>
 
   <div id="fields-container">
     @for (field of fields(); track field.id) {
@@ -82,11 +97,23 @@
         <input
           class="title-input"
           [value]="field.title"
-          (input)="handleFieldChange($event, field.id, 'title')"
           name="field-title"
           type="text"
           placeholder="タイトル"
+          readonly
         />
+        <button
+          type="button"
+          class="edit-trigger"
+          aria-label="フォームを編集"
+          (click)="openFieldModal(field)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
+            />
+          </svg>
+        </button>
         <div class="header-buttons">
           <button type="button" (click)="moveFieldUp(field)">▲</button>
           <button type="button" (click)="moveFieldDown(field)">▼</button>
@@ -148,10 +175,10 @@
         <textarea
           class="field-content-textarea"
           [value]="field.content"
-          (input)="handleFieldChange($event, field.id, 'content')"
           name="field-content"
           rows="8"
           placeholder="内容"
+          readonly
         ></textarea>
       </div>
       }
@@ -163,3 +190,56 @@
     追加
   </button>
 </form>
+
+@if (editingMainQuestion()) {
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      class="modal-close"
+      aria-label="閉じる"
+      (click)="closeModal()"
+    >
+      ×
+    </button>
+    <h4>質問内容の編集</h4>
+    <textarea
+      rows="14"
+      [ngModel]="mainQuestion()"
+      (ngModelChange)="mainQuestion.set($event)"
+    ></textarea>
+  </div>
+</div>
+}
+
+@if (editingField(); as activeField) {
+<div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      class="modal-close"
+      aria-label="閉じる"
+      (click)="closeModal()"
+    >
+      ×
+    </button>
+    <h4>フォーム編集</h4>
+    <label>
+      タイトル
+      <input
+        type="text"
+        [value]="activeField.title"
+        (input)="handleFieldChange($event, activeField.id, 'title')"
+      />
+    </label>
+    <label>
+      内容
+      <textarea
+        rows="14"
+        [value]="activeField.content"
+        (input)="handleFieldChange($event, activeField.id, 'content')"
+      ></textarea>
+    </label>
+  </div>
+</div>
+}
