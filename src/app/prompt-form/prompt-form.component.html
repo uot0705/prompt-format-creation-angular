@@ -20,22 +20,6 @@
     <label>
       <input
         type="checkbox"
-        [checked]="selectedPreset() === 'variableName'"
-        (click)="onPresetClick('variableName')"
-      />
-      変数名の提案
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'refactor'"
-        (click)="onPresetClick('refactor')"
-      />
-      リファクタ
-    </label>
-    <label>
-      <input
-        type="checkbox"
         [checked]="selectedPreset() === 'review'"
         (click)="onPresetClick('review')"
       />
@@ -49,37 +33,30 @@
       />
       やりとり整理
     </label>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'analyze'"
-        (click)="onPresetClick('analyze')"
-      />
-      コード分析
-    </label>
   </div>
 
   <div class="main-question">
+    <div class="main-question-header">
+      <button
+        type="button"
+        class="edit-trigger"
+        aria-label="質問内容を編集"
+        (click)="openMainQuestionModal()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
+          />
+        </svg>
+      </button>
+    </div>
     <textarea
       id="main-question"
       name="mainQuestion"
       rows="8"
       [ngModel]="mainQuestion()"
       (ngModelChange)="mainQuestion.set($event)"
-      readonly
     ></textarea>
-    <button
-      type="button"
-      class="edit-trigger"
-      aria-label="質問内容を編集"
-      (click)="openMainQuestionModal()"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
-        />
-      </svg>
-    </button>
   </div>
 
   <div id="fields-container">
@@ -97,33 +74,23 @@
         <input
           class="title-input"
           [value]="field.title"
+          (input)="handleFieldChange($event, field.id, 'title')"
           name="field-title"
           type="text"
           placeholder="タイトル"
-          readonly
         />
-        <button
-          type="button"
-          class="edit-trigger"
-          aria-label="フォームを編集"
-          (click)="openFieldModal(field)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
-            />
-          </svg>
-        </button>
-        <div class="header-buttons">
-          <button type="button" (click)="moveFieldUp(field)">▲</button>
-          <button type="button" (click)="moveFieldDown(field)">▼</button>
-          <button
-            type="button"
-            (click)="removeField(field)"
-            class="delete-btn"
-          >
-            削除
-          </button>
+        <div class="field-actions">
+          <div class="header-buttons">
+            <button type="button" (click)="moveFieldUp(field)">▲</button>
+            <button type="button" (click)="moveFieldDown(field)">▼</button>
+            <button
+              type="button"
+              (click)="removeField(field)"
+              class="delete-btn"
+            >
+              削除
+            </button>
+          </div>
         </div>
       </div>
 
@@ -137,37 +104,29 @@
           </button>
           <button
             type="button"
-            (click)="setCommonTitleWord(field.id, 'コード')"
-          >
-            コード
-          </button>
-          <button
-            type="button"
             (click)="setCommonTitleWord(field.id, 'エラー内容')"
           >
             エラー内容
           </button>
-        </div>
-        <div class="common-words-group common-words-file">
           <button
             type="button"
-            (click)="setCommonTitleWord(field.id, 'TSファイル')"
+            (click)="setCommonTitleWord(field.id, 'やりとり')"
           >
-            TSファイル
-          </button>
-          <button
-            type="button"
-            (click)="setCommonTitleWord(field.id, 'HTMLファイル')"
-          >
-            HTMLファイル
-          </button>
-          <button
-            type="button"
-            (click)="setCommonTitleWord(field.id, 'CSSファイル')"
-          >
-            CSSファイル
+            やりとり
           </button>
         </div>
+        <button
+            type="button"
+            class="edit-trigger"
+            aria-label="フォームを編集"
+            (click)="openFieldModal(field)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
+              />
+            </svg>
+          </button>
       </div>
 
       @if (field.expanded) {
@@ -175,10 +134,10 @@
         <textarea
           class="field-content-textarea"
           [value]="field.content"
+          (input)="handleFieldChange($event, field.id, 'content')"
           name="field-content"
           rows="8"
           placeholder="内容"
-          readonly
         ></textarea>
       </div>
       }

@@ -3,11 +3,8 @@ import { Injectable, signal } from '@angular/core';
 export type PresetType =
   | 'question'
   | 'error'
-  | 'variableName'
-  | 'refactor'
   | 'review'
-  | 'organize'
-  | 'analyze';
+  | 'organize';
 
 export type Field = {
   id: number;
@@ -164,29 +161,6 @@ export class PromptFormStore {
         );
         break;
       }
-      case 'variableName': {
-        this.mainQuestion.set(
-          '以下の変数の使い道に合う変数名を5個提案してください。\n' +
-            '提案する変数名は「シンプルな単語を使い」「意味が理解ができる」、「長くなりすぎない簡潔」な命名にしてください'
-        );
-        this.addField('変数の使い道');
-        this.addField(
-          '出力内容(以下の内容で5個)',
-          '・変数名:\n・おすすめの理由：'
-        );
-        break;
-      }
-      case 'refactor': {
-        this.mainQuestion.set('以下のリファクタをしてください');
-        this.addField(
-          '出力内容',
-          'リファクタしたほうが良い箇所を「3箇所」選んでください。その3箇所の現在のコードを出力して、以下を「エンジニア初心者でもわかりやすいように」教えてください。\n' +
-            '・なぜリファクタしたほうが良いか\n' +
-            '・どのようなリファクタをすればいいのか\n' +
-            '・リファクタしたコード'
-        );
-        break;
-      }
       case 'review': {
         this.mainQuestion.set(
           '上司からのレビュー指摘内容を以下の「出力内容」に沿って回答してください'
@@ -215,20 +189,6 @@ export class PromptFormStore {
             '・上記の結果に至るまでの経緯を説明してください'
         );
         this.addField('やりとり');
-        break;
-      }
-      case 'analyze': {
-        this.mainQuestion.set(
-          '以下の出力回答に沿ってコードの解析をしてください'
-        );
-        this.addField(
-          '出力内容',
-          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
-            '・対象コードの全体的な概要\n' +
-            '・対象コードの変数や関数ごとに処理を全て時系列で詳細におしえて\n' +
-            '・対象コードの押さえておくべきホポイント3つ'
-        );
-        this.addField('対象のコード');
         break;
       }
     }

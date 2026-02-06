@@ -20,7 +20,7 @@ label {
 .field-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -49,13 +49,8 @@ label {
 }
 
 .main-question {
-  position: relative;
-}
-
-.main-question textarea,
-.title-input,
-.field-content-textarea {
-  cursor: default;
+  display: flex;
+  flex-direction: column;
 }
 
 .delete-btn {
@@ -76,6 +71,7 @@ label {
 .common-words-group {
   display: flex;
   gap: 4px;
+  width: 93%;
 }
 
 .common-words-general button {
@@ -83,12 +79,8 @@ label {
   color: #fff;
 }
 
-.common-words-file button {
-  background-color: #007bff;
-  color: #fff;
-}
-
 .edit-trigger {
+  margin-top: 8px;
   border: 1px solid #d0d7de;
   background: #fff;
   color: #4b5563;
@@ -99,7 +91,10 @@ label {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .edit-trigger svg {
@@ -114,10 +109,28 @@ label {
   color: #111827;
 }
 
-.main-question .edit-trigger {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.field-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-question-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.main-question textarea,
+.field-content-textarea,
+.title-input {
+  width: 100%;
+}
+
+.title-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-backdrop {
