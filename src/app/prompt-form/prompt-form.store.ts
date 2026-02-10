@@ -48,6 +48,11 @@ export class PromptFormStore {
     this.updateNextFieldId(fields);
   }
 
+  // 選択中のプリセットだけを更新する（フォーム内容は変更しない）。
+  setSelectedPreset(value: PresetType | null): void {
+    this.selectedPreset.set(value);
+  }
+
   // 指定フィールドのタイトル/本文を更新する。
   updateField(
     fieldId: number,

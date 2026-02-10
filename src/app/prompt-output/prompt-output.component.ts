@@ -5,13 +5,31 @@ import {
   type HistorySnapshot,
   copyHistoryCache,
 } from '../copy-history-cache';
-import { PromptFormStore, type Field } from '../prompt-form/prompt-form.store';
+import {
+  PromptFormStore,
+  type Field,
+  type PresetType,
+} from '../prompt-form/prompt-form.store';
 
 type HistoryPreview = {
   text: string;
   top: number;
   left: number;
 };
+
+type PromptExportPayload = {
+  mainQuestion: string;
+  fields: Field[];
+  selectedPreset: PresetType | null;
+};
+
+type PromptExportEnvelope = {
+  schemaVersion: number;
+  exportedAt: string;
+  payload: PromptExportPayload;
+};
+
+const CURRENT_SCHEMA_VERSION = 1;
 
 @Component({
   selector: 'app-prompt-output',
@@ -22,10 +40,14 @@ type HistoryPreview = {
 export class PromptOutputComponent {
   private readonly formStore = inject(PromptFormStore);
 
+  protected readonly schemaVersionLabel = `ver${CURRENT_SCHEMA_VERSION}`;
+
   // 入力済みの質問テキストを共有ストアから参照する。
   protected readonly mainQuestion = this.formStore.mainQuestion;
   // 入力フィールドの一覧を共有ストアから参照する。
   protected readonly fields = this.formStore.fields;
+  // 選択中プリセットを共有ストアから参照する。
+  protected readonly selectedPreset = this.formStore.selectedPreset;
 
   // コピーボタンの成功状態を表示する。
   protected readonly copySuccess = signal(false);
@@ -35,6 +57,8 @@ export class PromptOutputComponent {
   protected readonly historyItems = signal(copyHistoryCache.getHistory());
   // 履歴プレビューの座標と本文を保持する。
   protected readonly historyPreview = signal<HistoryPreview | null>(null);
+  // インポート/エクスポートのメニュー表示を管理する。
+  protected readonly importExportOpen = signal(false);
 
   // Markdown から右ペインの表示用HTMLを生成する。
   protected readonly mainQuestionOutput = computed(() =>
@@ -71,12 +95,66 @@ export class PromptOutputComponent {
     this.historyOpen.set(true);
     this.historyPreview.set(null);
     this.historyItems.set(copyHistoryCache.getHistory());
+    this.importExportOpen.set(false);
   }
 
   // 履歴モーダルを閉じてプレビューを解除する。
   protected closeHistoryModal(): void {
     this.historyOpen.set(false);
     this.historyPreview.set(null);
+  }
+
+  // インポート/エクスポートメニューの開閉を切り替える。
+  protected toggleImportExportMenu(): void {
+    this.importExportOpen.update((open) => !open);
+  }
+
+  // ファイル選択ダイアログを開く。
+  protected triggerImport(input: HTMLInputElement): void {
+    this.importExportOpen.set(false);
+    input.value = '';
+    input.click();
+  }
+
+  // 選択されたファイルを読み取り、フォームへ反映する。
+  protected handleImport(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    this.importExportOpen.set(false);
+
+    void this.importFromFile(file)
+      .catch(() => {
+        window.alert(
+          'インポートに失敗しました。ファイル形式を確認してください。'
+        );
+      })
+      .finally(() => {
+        if (input) {
+          input.value = '';
+        }
+      });
+  }
+
+  // フォーム内容をJSONとしてダウンロードする。
+  protected exportForm(): void {
+    const envelope = this.buildExportEnvelope();
+    const json = JSON.stringify(envelope, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${this.schemaVersionLabel}_prompt-form-${this.buildTimestampLabel(
+      new Date()
+    )}.json`;
+    anchor.click();
+
+    URL.revokeObjectURL(url);
+    this.importExportOpen.set(false);
   }
 
   // 履歴表示用のラベルを整形する。
@@ -178,5 +256,156 @@ export class PromptOutputComponent {
     }
 
     return trimmed.slice(0, 15);
+  }
+
+  // エクスポート用のパッケージを作成する。
+  private buildExportEnvelope(): PromptExportEnvelope {
+    return {
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      payload: {
+        mainQuestion: this.mainQuestion(),
+        fields: this.fields().map((field) => ({ ...field })),
+        selectedPreset: this.selectedPreset(),
+      },
+    };
+  }
+
+  // ファイルを読み込んでフォームに反映する。
+  private async importFromFile(file: File): Promise<void> {
+    const text = await file.text();
+    const payload = this.parseImportPayload(text);
+    if (!payload) {
+      throw new Error('Invalid import file');
+    }
+
+    this.formStore.setMainQuestion(payload.mainQuestion);
+    this.formStore.setFields(payload.fields.map((field) => ({ ...field })));
+    this.formStore.setSelectedPreset(payload.selectedPreset);
+  }
+
+  // JSON文字列からペイロードを抽出・整形する。
+  private parseImportPayload(text: string): PromptExportPayload | null {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return null;
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    const envelope = parsed as Record<string, unknown>;
+    const schemaVersion = Number.isInteger(envelope['schemaVersion'])
+      ? (envelope['schemaVersion'] as number)
+      : 0;
+
+    if (schemaVersion === CURRENT_SCHEMA_VERSION) {
+      return this.normalizePayload(envelope['payload']);
+    }
+
+    const migrated = this.migratePayload(envelope, schemaVersion);
+    return this.normalizePayload(migrated);
+  }
+
+  // 古いスキーマのデータを現在の形へ変換する。
+  private migratePayload(
+    envelope: Record<string, unknown>,
+    schemaVersion: number
+  ): unknown {
+    const migrations: Record<number, (payload: unknown) => unknown> = {
+      0: (payload) => payload,
+    };
+
+    let payload: unknown =
+      'payload' in envelope ? envelope['payload'] : (envelope as unknown);
+
+    for (let version = schemaVersion; version < CURRENT_SCHEMA_VERSION; version += 1) {
+      const migrate = migrations[version];
+      if (!migrate) {
+        return null;
+      }
+      payload = migrate(payload);
+    }
+
+    return payload;
+  }
+
+  // ペイロードを安全な形へ正規化する。
+  private normalizePayload(payload: unknown): PromptExportPayload | null {
+    if (!payload || typeof payload !== 'object') {
+      return null;
+    }
+
+    const data = payload as Record<string, unknown>;
+    const mainQuestion =
+      typeof data['mainQuestion'] === 'string' ? (data['mainQuestion'] as string) : '';
+    const fieldsSource = Array.isArray(data['fields']) ? (data['fields'] as unknown[]) : [];
+
+    const usedIds = new Set<number>();
+    let nextId = 1;
+
+    const resolveId = (candidate: unknown): number => {
+      if (
+        typeof candidate === 'number' &&
+        Number.isFinite(candidate) &&
+        candidate > 0 &&
+        !usedIds.has(candidate)
+      ) {
+        usedIds.add(candidate);
+        nextId = Math.max(nextId, candidate + 1);
+        return candidate;
+      }
+
+      while (usedIds.has(nextId)) {
+        nextId += 1;
+      }
+      const assigned = nextId;
+      usedIds.add(assigned);
+      nextId += 1;
+      return assigned;
+    };
+
+    const fields = fieldsSource.map((field) => {
+      const entry = field as Record<string, unknown>;
+      return {
+        id: resolveId(entry['id']),
+        title: typeof entry['title'] === 'string' ? (entry['title'] as string) : '',
+        content: typeof entry['content'] === 'string' ? (entry['content'] as string) : '',
+        expanded:
+          typeof entry['expanded'] === 'boolean' ? (entry['expanded'] as boolean) : true,
+      };
+    });
+
+    return {
+      mainQuestion,
+      fields,
+      selectedPreset: this.normalizePreset(data['selectedPreset']),
+    };
+  }
+
+  // 不正なプリセット値を弾く。
+  private normalizePreset(value: unknown): PresetType | null {
+    if (
+      value === 'question' ||
+      value === 'error' ||
+      value === 'review' ||
+      value === 'organize'
+    ) {
+      return value;
+    }
+    return null;
+  }
+
+  // ファイル名用のタイムスタンプを生成する。
+  private buildTimestampLabel(date: Date): string {
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(
+      date.getDate()
+    )}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(
+      date.getSeconds()
+    )}`;
   }
 }

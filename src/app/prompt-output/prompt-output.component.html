@@ -11,6 +11,38 @@
     <button id="history-btn" type="button" (click)="openHistoryModal()">
       履歴
     </button>
+    <div class="import-export">
+      <button
+        type="button"
+        class="import-export-trigger"
+        aria-label="インポートとエクスポート"
+        (click)="toggleImportExportMenu()"
+      >
+        ⬇︎⬆︎
+      </button>
+      @if (importExportOpen()) {
+      <div class="import-export-menu">
+        <div class="import-export-version">{{ schemaVersionLabel }}</div>
+        <button
+          type="button"
+          class="import-btn"
+          (click)="triggerImport(importInput)"
+        >
+          インポート
+        </button>
+        <button type="button" class="export-btn" (click)="exportForm()">
+          エクスポート
+        </button>
+      </div>
+      }
+      <input
+        #importInput
+        type="file"
+        class="import-file-input"
+        accept="application/json"
+        (change)="handleImport($event)"
+      />
+    </div>
   </div>
   <div id="output">
     <div id="main-question-output" [innerHTML]="mainQuestionOutput()"></div>
