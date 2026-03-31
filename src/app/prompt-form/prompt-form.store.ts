@@ -1,4 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
+
+export const DEFAULT_BROWSER_TAB_TITLE = 'プロンプト作成ツール';
+export const MAX_BROWSER_TAB_TITLE_LENGTH = 80;
 
 export type PresetType =
   | 'question'
@@ -26,10 +29,16 @@ export class PromptFormStore {
 
   // メイン質問の本文を保持する。
   readonly mainQuestion = signal('');
+  // ブラウザタブに表示する任意タイトルを保持する。
+  readonly browserTabTitle = signal('');
   // 入力フィールドの配列を保持する。
   readonly fields = signal([this.createField()]);
   // 選択中のプリセット種別を保持する。
   readonly selectedPreset = signal<PresetType | null>(null);
+  // ブラウザタブに実際に表示するタイトルを導出する。
+  readonly resolvedBrowserTabTitle = computed(() =>
+    this.buildResolvedBrowserTabTitle()
+  );
 
   // プリセットを選び、フォーム内容を適用する。
   selectPreset(type: PresetType): void {
@@ -40,6 +49,11 @@ export class PromptFormStore {
   // メイン質問を更新する。
   setMainQuestion(value: string): void {
     this.mainQuestion.set(value);
+  }
+
+  // ブラウザタブ用の任意タイトルを更新する。
+  setBrowserTabTitle(value: string): void {
+    this.browserTabTitle.set(typeof value === 'string' ? value : '');
   }
 
   // フィールド配列を丸ごと入れ替える。
@@ -124,6 +138,7 @@ export class PromptFormStore {
   // フォームの入力内容を初期化する。
   resetForm(): void {
     this.mainQuestion.set('');
+    this.browserTabTitle.set('');
     this.fields.set([]);
   }
 
@@ -197,5 +212,39 @@ export class PromptFormStore {
         break;
       }
     }
+  }
+
+  // 専用入力、メイン質問、既定値の順でタブタイトルを決める。
+  private buildResolvedBrowserTabTitle(): string {
+    const explicitTitle = this.normalizeBrowserTabTitle(this.browserTabTitle());
+    if (explicitTitle) {
+      return explicitTitle;
+    }
+
+    const fallbackTitle = this.normalizeBrowserTabTitle(this.mainQuestion());
+    if (fallbackTitle) {
+      return fallbackTitle;
+    }
+
+    return DEFAULT_BROWSER_TAB_TITLE;
+  }
+
+  // タブ表示向けに空白を整え、長すぎる場合だけ末尾を省略する。
+  private normalizeBrowserTabTitle(value: string | null | undefined): string {
+    const safeValue = typeof value === 'string' ? value : '';
+
+    const normalized = safeValue.replace(/\s+/g, ' ').trim();
+    if (!normalized) {
+      return '';
+    }
+
+    const characters = Array.from(normalized);
+    if (characters.length <= MAX_BROWSER_TAB_TITLE_LENGTH) {
+      return normalized;
+    }
+
+    return `${characters
+      .slice(0, MAX_BROWSER_TAB_TITLE_LENGTH - 1)
+      .join('')}…`;
   }
 }

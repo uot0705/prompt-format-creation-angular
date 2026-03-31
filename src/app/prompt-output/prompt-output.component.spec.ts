@@ -40,6 +40,7 @@ describe('PromptOutputComponent', () => {
     const store = fixture.debugElement.injector.get(PromptFormStore);
 
     store.setMainQuestion('Question');
+    store.setBrowserTabTitle('Explicit Tab');
     store.setFields([
       { id: 1, title: 'Title', content: 'Content', expanded: true },
     ]);
@@ -52,6 +53,7 @@ describe('PromptOutputComponent', () => {
       expectedOutput,
       jasmine.objectContaining({
         mainQuestion: 'Question',
+        browserTabTitle: 'Explicit Tab',
         fields: [jasmine.objectContaining({ title: 'Title', content: 'Content' })],
       })
     );
@@ -108,6 +110,7 @@ describe('PromptOutputComponent', () => {
       createdAt: 1700000000000,
       snapshot: {
         mainQuestion: 'Snapshot Question',
+        browserTabTitle: 'Snapshot Tab',
         fields: [
           {
             id: 1,
@@ -121,6 +124,7 @@ describe('PromptOutputComponent', () => {
 
     (component as any).applyHistory(snapshotItem);
     expect(store.mainQuestion()).toBe('Snapshot Question');
+    expect(store.browserTabTitle()).toBe('Snapshot Tab');
     expect(store.fields().length).toBe(1);
     expect(store.fields()[0].title).toBe('Snapshot Title');
     expect((component as any).historyOpen()).toBeFalse();
@@ -131,7 +135,62 @@ describe('PromptOutputComponent', () => {
     };
     (component as any).applyHistory(textOnlyItem);
     expect(store.mainQuestion()).toBe('Text Only');
+    expect(store.browserTabTitle()).toBe('');
     expect(store.fields().length).toBe(0);
+  });
+
+  it('古い履歴スナップショットにタブタイトルがなくても復元できる', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const component = fixture.componentInstance as PromptOutputComponent;
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+
+    (component as any).applyHistory({
+      text: 'legacy text',
+      createdAt: 1700000000002,
+      snapshot: {
+        mainQuestion: 'Legacy Question',
+        fields: [
+          {
+            id: 1,
+            title: 'Legacy Title',
+            content: 'Legacy Body',
+            expanded: true,
+          },
+        ],
+      } as any,
+    });
+
+    expect(store.mainQuestion()).toBe('Legacy Question');
+    expect(store.browserTabTitle()).toBe('');
+    expect(store.fields()[0].title).toBe('Legacy Title');
+  });
+
+  it('エクスポートとインポートでブラウザタブタイトルを保持する', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const component = fixture.componentInstance as PromptOutputComponent;
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+
+    store.setMainQuestion('Question');
+    store.setBrowserTabTitle('Saved Tab');
+    store.setFields([
+      { id: 1, title: 'Title', content: 'Body', expanded: true },
+    ]);
+    store.setSelectedPreset('question');
+
+    const envelope = (component as any).buildExportEnvelope();
+    const parsed = (component as any).parseImportPayload(JSON.stringify(envelope));
+
+    expect(parsed).toEqual(
+      jasmine.objectContaining({
+        mainQuestion: 'Question',
+        browserTabTitle: 'Saved Tab',
+        selectedPreset: 'question',
+      })
+    );
   });
 
   it('履歴ラベル整形とプレビュー位置計算が行われる', async () => {

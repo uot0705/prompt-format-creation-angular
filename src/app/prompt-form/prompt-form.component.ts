@@ -14,14 +14,16 @@ export class PromptFormComponent {
 
   // メイン質問の入力値を共有ストアから参照する。
   protected readonly mainQuestion = this.formStore.mainQuestion;
+  // ブラウザタブ用の任意タイトルを共有ストアから参照する。
+  protected readonly browserTabTitle = this.formStore.browserTabTitle;
   // フィールド一覧を共有ストアから参照する。
   protected readonly fields = this.formStore.fields;
   // 選択中のプリセットを共有ストアから参照する。
   protected readonly selectedPreset = this.formStore.selectedPreset;
+  // ブラウザタブ用入力欄の最大文字数を定義する。
+  protected readonly browserTabTitleMaxLength = 120;
   // 編集対象のフィールドIDを保持する。
   protected readonly editingFieldId = signal<number | null>(null);
-  // メイン質問の編集状態を保持する。
-  protected readonly editingMainQuestion = signal(false);
   // 編集中フィールドを導出する。
   protected readonly editingField = computed<Field | null>(() => {
     const id = this.editingFieldId();
@@ -76,21 +78,13 @@ export class PromptFormComponent {
     this.formStore.setCommonTitleWord(fieldId, word);
   }
 
-  // メイン質問の編集モーダルを開く。
-  protected openMainQuestionModal(): void {
-    this.editingMainQuestion.set(true);
-    this.editingFieldId.set(null);
-  }
-
   // フィールド編集モーダルを開く。
   protected openFieldModal(field: Field): void {
     this.editingFieldId.set(field.id);
-    this.editingMainQuestion.set(false);
   }
 
   // 編集モーダルを閉じる。
   protected closeModal(): void {
     this.editingFieldId.set(null);
-    this.editingMainQuestion.set(false);
   }
 }

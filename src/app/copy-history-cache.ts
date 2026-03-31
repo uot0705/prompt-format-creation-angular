@@ -1,5 +1,6 @@
 export type HistorySnapshot = {
   mainQuestion: string;
+  browserTabTitle: string;
   fields: Array<{
     id: number;
     title: string;
@@ -38,8 +39,45 @@ const normalizeHistory = (items: unknown): CopyHistoryItem[] => {
     .map((item) => ({
       text: item.text,
       createdAt: item.createdAt,
-      snapshot: item.snapshot,
+      snapshot: normalizeSnapshot(item.snapshot),
     }));
+};
+
+const normalizeSnapshot = (snapshot: unknown): HistorySnapshot | undefined => {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return undefined;
+  }
+
+  const data = snapshot as Partial<HistorySnapshot>;
+  const fieldsSource = Array.isArray(data.fields) ? data.fields : [];
+
+  return {
+    mainQuestion:
+      typeof data.mainQuestion === 'string' ? data.mainQuestion : '',
+    browserTabTitle:
+      typeof data.browserTabTitle === 'string' ? data.browserTabTitle : '',
+    fields: fieldsSource
+      .filter((field) => typeof field === 'object' && field !== null)
+      .map((field, index) => {
+        const entry = field as Record<string, unknown>;
+        return {
+          id:
+            typeof entry['id'] === 'number' && Number.isFinite(entry['id'])
+              ? (entry['id'] as number)
+              : index + 1,
+          title:
+            typeof entry['title'] === 'string' ? (entry['title'] as string) : '',
+          content:
+            typeof entry['content'] === 'string'
+              ? (entry['content'] as string)
+              : '',
+          expanded:
+            typeof entry['expanded'] === 'boolean'
+              ? (entry['expanded'] as boolean)
+              : true,
+        };
+      }),
+  };
 };
 
 const loadHistory = (): CopyHistoryItem[] => {

@@ -19,6 +19,7 @@ type HistoryPreview = {
 
 type PromptExportPayload = {
   mainQuestion: string;
+  browserTabTitle: string;
   fields: Field[];
   selectedPreset: PresetType | null;
 };
@@ -44,6 +45,8 @@ export class PromptOutputComponent {
 
   // 入力済みの質問テキストを共有ストアから参照する。
   protected readonly mainQuestion = this.formStore.mainQuestion;
+  // 任意のブラウザタブタイトルを共有ストアから参照する。
+  protected readonly browserTabTitle = this.formStore.browserTabTitle;
   // 入力フィールドの一覧を共有ストアから参照する。
   protected readonly fields = this.formStore.fields;
   // 選択中プリセットを共有ストアから参照する。
@@ -207,6 +210,7 @@ export class PromptOutputComponent {
 
     if (item.snapshot) {
       this.formStore.setMainQuestion(item.snapshot.mainQuestion);
+      this.formStore.setBrowserTabTitle(item.snapshot.browserTabTitle ?? '');
       this.formStore.setFields(
         item.snapshot.fields.map((field) => ({ ...field }))
       );
@@ -244,6 +248,7 @@ export class PromptOutputComponent {
   private createSnapshot(): HistorySnapshot {
     return {
       mainQuestion: this.mainQuestion(),
+      browserTabTitle: this.browserTabTitle(),
       fields: this.fields().map((field) => ({ ...field })),
     };
   }
@@ -265,6 +270,7 @@ export class PromptOutputComponent {
       exportedAt: new Date().toISOString(),
       payload: {
         mainQuestion: this.mainQuestion(),
+        browserTabTitle: this.browserTabTitle(),
         fields: this.fields().map((field) => ({ ...field })),
         selectedPreset: this.selectedPreset(),
       },
@@ -280,6 +286,7 @@ export class PromptOutputComponent {
     }
 
     this.formStore.setMainQuestion(payload.mainQuestion);
+    this.formStore.setBrowserTabTitle(payload.browserTabTitle);
     this.formStore.setFields(payload.fields.map((field) => ({ ...field })));
     this.formStore.setSelectedPreset(payload.selectedPreset);
   }
@@ -342,6 +349,10 @@ export class PromptOutputComponent {
     const data = payload as Record<string, unknown>;
     const mainQuestion =
       typeof data['mainQuestion'] === 'string' ? (data['mainQuestion'] as string) : '';
+    const browserTabTitle =
+      typeof data['browserTabTitle'] === 'string'
+        ? (data['browserTabTitle'] as string)
+        : '';
     const fieldsSource = Array.isArray(data['fields']) ? (data['fields'] as unknown[]) : [];
 
     const usedIds = new Set<number>();
@@ -381,6 +392,7 @@ export class PromptOutputComponent {
 
     return {
       mainQuestion,
+      browserTabTitle,
       fields,
       selectedPreset: this.normalizePreset(data['selectedPreset']),
     };

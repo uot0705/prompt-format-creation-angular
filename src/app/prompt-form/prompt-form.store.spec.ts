@@ -1,4 +1,8 @@
-import { PromptFormStore } from './prompt-form.store';
+import {
+  DEFAULT_BROWSER_TAB_TITLE,
+  MAX_BROWSER_TAB_TITLE_LENGTH,
+  PromptFormStore,
+} from './prompt-form.store';
 
 const stubDateNow = (): void => {
   let now = 1_700_000_000_000;
@@ -34,5 +38,32 @@ describe('PromptFormStore', () => {
 
     store.moveFieldUp(1);
     expect(store.fields().map((field) => field.title)).toEqual(['A', 'B']);
+  });
+
+  it('ブラウザタブタイトルは専用入力を優先し未入力なら質問内容へフォールバックする', () => {
+    const store = new PromptFormStore();
+
+    expect(store.resolvedBrowserTabTitle()).toBe(DEFAULT_BROWSER_TAB_TITLE);
+
+    store.setMainQuestion('  最初の質問タイトル \n の候補  ');
+    expect(store.resolvedBrowserTabTitle()).toBe('最初の質問タイトル の候補');
+
+    store.setBrowserTabTitle('  明示したタブ名  ');
+    expect(store.resolvedBrowserTabTitle()).toBe('明示したタブ名');
+
+    store.resetForm();
+    expect(store.browserTabTitle()).toBe('');
+    expect(store.resolvedBrowserTabTitle()).toBe(DEFAULT_BROWSER_TAB_TITLE);
+  });
+
+  it('ブラウザタブタイトルが長すぎる場合は末尾を省略する', () => {
+    const store = new PromptFormStore();
+
+    store.setBrowserTabTitle('あ'.repeat(MAX_BROWSER_TAB_TITLE_LENGTH + 10));
+
+    expect(Array.from(store.resolvedBrowserTabTitle()).length).toBe(
+      MAX_BROWSER_TAB_TITLE_LENGTH
+    );
+    expect(store.resolvedBrowserTabTitle().endsWith('…')).toBeTrue();
   });
 });

@@ -10,6 +10,14 @@ const getMainQuestionTextarea = (container: Element): HTMLTextAreaElement => {
   return element;
 };
 
+const getBrowserTabTitleInput = (container: Element): HTMLInputElement => {
+  const element = container.querySelector<HTMLInputElement>('#browser-tab-title');
+  if (!element) {
+    throw new Error('browser tab title input not found');
+  }
+  return element;
+};
+
 const getTitleInputs = (container: Element): HTMLInputElement[] =>
   Array.from(container.querySelectorAll<HTMLInputElement>('.title-input'));
 
@@ -65,6 +73,31 @@ describe('PromptFormComponent', () => {
     fixture.detectChanges();
 
     expect(getFieldContainers(container).length).toBe(2);
+  });
+
+  it('ブラウザタブタイトル入力がストアに反映される', async () => {
+    const { container, fixture } = await render(PromptFormComponent, {
+      providers: [PromptFormStore],
+    });
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+
+    const browserTabTitleInput = getBrowserTabTitleInput(container);
+    fireEvent.input(browserTabTitleInput, {
+      target: { value: '確認用のタブタイトル' },
+    });
+    fixture.detectChanges();
+
+    expect(store.browserTabTitle()).toBe('確認用のタブタイトル');
+    expect(browserTabTitleInput.placeholder).toContain('空欄なら');
+  });
+
+  it('質問内容編集ボタンとモーダルは表示されない', async () => {
+    const { container } = await render(PromptFormComponent, {
+      providers: [PromptFormStore],
+    });
+
+    expect(screen.queryByLabelText('質問内容を編集')).toBeNull();
+    expect(container.textContent).not.toContain('質問内容の編集');
   });
 
   it('フィールドを折りたたむと内容が非表示になる', async () => {

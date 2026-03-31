@@ -7,8 +7,31 @@
   }
 }
 
-label {
+.title-content label {
   margin-left: 10px;
+}
+
+.browser-tab-title {
+  margin: 12px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.browser-tab-title-label {
+  margin-left: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.browser-tab-title-input {
+  width: 100%;
+  max-width: 420px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .field {
@@ -114,12 +137,6 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.main-question-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 6px;
 }
 
 .main-question textarea,
