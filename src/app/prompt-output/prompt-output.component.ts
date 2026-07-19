@@ -1,4 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { marked } from 'marked';
 import {
   type CopyHistoryItem,
@@ -40,6 +48,10 @@ const CURRENT_SCHEMA_VERSION = 1;
 })
 export class PromptOutputComponent {
   private readonly formStore = inject(PromptFormStore);
+  private historyTrigger: HTMLElement | null = null;
+
+  @ViewChild('historyModal')
+  private historyModal?: ElementRef<HTMLElement>;
 
   protected readonly schemaVersionLabel = `ver${CURRENT_SCHEMA_VERSION}`;
 
@@ -72,6 +84,14 @@ export class PromptOutputComponent {
   protected readonly fieldsOutputForDisplay = computed(() =>
     this.buildFieldsOutput(this.fields())
   );
+  // 入力済みの内容があるときだけドキュメントプレビューを表示する。
+  protected readonly hasPreviewContent = computed(
+    () =>
+      this.mainQuestion().trim().length > 0 ||
+      this.fields().some(
+        (field) => field.title.trim().length > 0 || field.content.trim().length > 0
+      )
+  );
 
   // 画面内容をクリップボードへコピーし、履歴へ保存する。
   protected copyToClipboard(): Promise<void> {
@@ -94,17 +114,37 @@ export class PromptOutputComponent {
   }
 
   // 履歴モーダルを開き、最新の履歴を読み込む。
-  protected openHistoryModal(): void {
+  protected openHistoryModal(event?: Event): void {
+    this.historyTrigger = event?.currentTarget as HTMLElement | null;
     this.historyOpen.set(true);
     this.historyPreview.set(null);
     this.historyItems.set(copyHistoryCache.getHistory());
     this.importExportOpen.set(false);
+    queueMicrotask(() => this.historyModal?.nativeElement.focus());
   }
 
   // 履歴モーダルを閉じてプレビューを解除する。
   protected closeHistoryModal(): void {
     this.historyOpen.set(false);
     this.historyPreview.set(null);
+    queueMicrotask(() => this.historyTrigger?.focus());
+  }
+
+  // ダイアログをEscapeで閉じ、Tab移動をダイアログ内に保つ。
+  @HostListener('document:keydown', ['$event'])
+  protected handleDocumentKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      if (this.historyOpen()) {
+        event.preventDefault();
+        this.closeHistoryModal();
+        return;
+      }
+      this.importExportOpen.set(false);
+    }
+
+    if (event.key === 'Tab' && this.historyOpen()) {
+      this.trapHistoryFocus(event);
+    }
   }
 
   // インポート/エクスポートメニューの開閉を切り替える。
@@ -173,7 +213,7 @@ export class PromptOutputComponent {
   }
 
   // ホバー位置に合わせて履歴プレビューを表示する。
-  protected showHistoryPreview(item: CopyHistoryItem, event: MouseEvent): void {
+  protected showHistoryPreview(item: CopyHistoryItem, event: Event): void {
     const target = event.currentTarget as HTMLElement;
     if (!target) {
       return;
@@ -202,6 +242,36 @@ export class PromptOutputComponent {
   // 履歴プレビューの表示を消す。
   protected hideHistoryPreview(): void {
     this.historyPreview.set(null);
+  }
+
+  // 履歴ダイアログからキーボードフォーカスが抜けないようにする。
+  private trapHistoryFocus(event: KeyboardEvent): void {
+    const modal = this.historyModal?.nativeElement;
+    if (!modal) {
+      return;
+    }
+
+    const focusable = Array.from(
+      modal.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    if (focusable.length === 0) {
+      event.preventDefault();
+      modal.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === modal)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   // 履歴の内容をフォームへ反映し、モーダルを閉じる。
@@ -234,6 +304,9 @@ export class PromptOutputComponent {
   // プレビュー用のHTML断片を生成する。
   private buildFieldsOutput(fields: Field[]): string {
     return fields
+      .filter(
+        (field) => field.title.trim().length > 0 || field.content.trim().length > 0
+      )
       .map(
         (field) =>
           `<section class="preview-field">

@@ -12,7 +12,7 @@ describe('AppComponent', () => {
 
     expect(container.querySelector('app-prompt-form')).not.toBeNull();
     expect(container.querySelector('app-prompt-output')).not.toBeNull();
-    expect(screen.getByText('質問フォーム')).toBeTruthy();
+    expect(screen.getByText('作成する内容')).toBeTruthy();
   });
 
   it('ブラウザタブタイトルは専用入力を優先し空欄なら質問内容を使う', async () => {

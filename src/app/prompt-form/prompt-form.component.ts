@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PromptFormStore, type Field, type PresetType } from './prompt-form.store';
 
@@ -22,16 +22,6 @@ export class PromptFormComponent {
   protected readonly selectedPreset = this.formStore.selectedPreset;
   // ブラウザタブ用入力欄の最大文字数を定義する。
   protected readonly browserTabTitleMaxLength = 120;
-  // 編集対象のフィールドIDを保持する。
-  protected readonly editingFieldId = signal<number | null>(null);
-  // 編集中フィールドを導出する。
-  protected readonly editingField = computed<Field | null>(() => {
-    const id = this.editingFieldId();
-    if (id === null) {
-      return null;
-    }
-    return this.fields().find((field) => field.id === id) ?? null;
-  });
 
   // プリセット選択をストアに反映する。
   protected onPresetClick(type: PresetType): void {
@@ -78,13 +68,4 @@ export class PromptFormComponent {
     this.formStore.setCommonTitleWord(fieldId, word);
   }
 
-  // フィールド編集モーダルを開く。
-  protected openFieldModal(field: Field): void {
-    this.editingFieldId.set(field.id);
-  }
-
-  // 編集モーダルを閉じる。
-  protected closeModal(): void {
-    this.editingFieldId.set(null);
-  }
 }
