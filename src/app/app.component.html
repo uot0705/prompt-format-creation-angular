@@ -1,4 +1,21 @@
-<div class="container">
-  <app-prompt-form class="left-panel"></app-prompt-form>
-  <app-prompt-output class="right-panel"></app-prompt-output>
-</div>
+<main class="workspace">
+  <header class="app-header">
+    <div class="app-identity">
+      <div class="app-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 4.75h14A2.25 2.25 0 0 1 21.25 7v10A2.25 2.25 0 0 1 19 19.25H5A2.25 2.25 0 0 1 2.75 17V7A2.25 2.25 0 0 1 5 4.75Z" />
+          <path d="m7.5 9 2.75 3L7.5 15M12 15h4.5" />
+        </svg>
+      </div>
+      <div>
+        <h1>プロンプト作成ツール</h1>
+        <p>構成を整えながら、完成形をリアルタイムで確認できます</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace-grid">
+    <app-prompt-form class="editor-panel"></app-prompt-form>
+    <app-prompt-output class="preview-panel"></app-prompt-output>
+  </div>
+</main>

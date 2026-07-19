@@ -1,185 +1,184 @@
-<form>
-  <div class="title-content">
-    <h3>質問フォーム</h3>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'question'"
+<form class="prompt-form">
+  <section class="form-section preset-section" aria-labelledby="preset-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">テンプレート</p>
+        <h2 id="preset-heading">作成する内容</h2>
+      </div>
+      <p class="section-description">目的に近い構成から始められます</p>
+    </div>
+
+    <div class="preset-control" role="group" aria-label="プロンプトの種類">
+      <button
+        type="button"
+        [class.active]="selectedPreset() === 'question'"
+        [attr.aria-pressed]="selectedPreset() === 'question'"
         (click)="onPresetClick('question')"
-      />
-      質問
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'error'"
+      >
+        質問
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedPreset() === 'error'"
+        [attr.aria-pressed]="selectedPreset() === 'error'"
         (click)="onPresetClick('error')"
-      />
-      エラー相談
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'review'"
+      >
+        エラー相談
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedPreset() === 'review'"
+        [attr.aria-pressed]="selectedPreset() === 'review'"
         (click)="onPresetClick('review')"
-      />
-      レビュー指摘
-    </label>
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPreset() === 'organize'"
+      >
+        レビュー指摘
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedPreset() === 'organize'"
+        [attr.aria-pressed]="selectedPreset() === 'organize'"
         (click)="onPresetClick('organize')"
-      />
-      やりとり整理
-    </label>
-  </div>
+      >
+        やりとり整理
+      </button>
+    </div>
+  </section>
 
-  <div class="browser-tab-title">
-    <label class="browser-tab-title-label" for="browser-tab-title">
-      ブラウザタブタイトル（任意）
-    </label>
-    <input
-      id="browser-tab-title"
-      class="browser-tab-title-input"
-      name="browserTabTitle"
-      type="text"
-      [attr.maxlength]="browserTabTitleMaxLength"
-      [ngModel]="browserTabTitle()"
-      (ngModelChange)="browserTabTitle.set($event)"
-      placeholder="変更用の入力欄です。空欄なら下の質問内容から自動設定します"
-    />
-  </div>
-
-  <div class="main-question">
+  <section class="form-section" aria-labelledby="question-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">メインメッセージ</p>
+        <h2 id="question-heading">質問内容</h2>
+      </div>
+    </div>
+    <label class="visually-hidden" for="main-question">質問内容</label>
     <textarea
       id="main-question"
       name="mainQuestion"
-      rows="8"
+      rows="7"
       [ngModel]="mainQuestion()"
       (ngModelChange)="mainQuestion.set($event)"
+      placeholder="AIに依頼したい内容を入力してください"
     ></textarea>
-  </div>
 
-  <div id="fields-container">
-    @for (field of fields(); track field.id) {
-    <div class="field">
-      <div class="field-header">
-        <button
-          class="toggle-btn"
-          type="button"
-          [class.active]="field.expanded"
-          (click)="toggleField(field)"
-        >
-          {{ field.expanded ? "▲" : "▼" }}
-        </button>
-        <input
-          class="title-input"
-          [value]="field.title"
-          (input)="handleFieldChange($event, field.id, 'title')"
-          name="field-title"
-          type="text"
-          placeholder="タイトル"
-        />
-        <div class="field-actions">
-          <div class="header-buttons">
-            <button type="button" (click)="moveFieldUp(field)">▲</button>
-            <button type="button" (click)="moveFieldDown(field)">▼</button>
-            <button
-              type="button"
-              (click)="removeField(field)"
-              class="delete-btn"
-            >
-              削除
-            </button>
-          </div>
-        </div>
+    <div class="tab-title-field">
+      <label for="browser-tab-title">ブラウザタブのタイトル</label>
+      <span id="browser-tab-title-help">空欄の場合は質問内容から自動設定されます</span>
+      <input
+        id="browser-tab-title"
+        name="browserTabTitle"
+        type="text"
+        [attr.maxlength]="browserTabTitleMaxLength"
+        [ngModel]="browserTabTitle()"
+        (ngModelChange)="browserTabTitle.set($event)"
+        aria-describedby="browser-tab-title-help"
+        placeholder="任意のタイトル"
+      />
+    </div>
+  </section>
+
+  <section class="fields-section" aria-labelledby="fields-heading">
+    <div class="section-heading fields-heading">
+      <div>
+        <p class="eyebrow">補足情報</p>
+        <h2 id="fields-heading">入力フィールド</h2>
       </div>
+      <span class="field-count">{{ fields().length }}</span>
+    </div>
 
-      <div class="common-words-content">
-        <div class="common-words-group common-words-general">
+    <div id="fields-container" class="fields-list">
+      @for (field of fields(); track field.id; let first = $first; let last = $last; let index = $index) {
+      <article class="field">
+        <header class="field-header">
           <button
+            class="icon-button toggle-btn"
             type="button"
-            (click)="setCommonTitleWord(field.id, '出力内容')"
+            [attr.aria-expanded]="field.expanded"
+            [attr.aria-controls]="'field-content-' + field.id"
+            [attr.aria-label]="field.expanded ? 'フィールドを折りたたむ' : 'フィールドを展開する'"
+            (click)="toggleField(field)"
           >
-            出力内容
-          </button>
-          <button
-            type="button"
-            (click)="setCommonTitleWord(field.id, 'エラー内容')"
-          >
-            エラー内容
-          </button>
-          <button
-            type="button"
-            (click)="setCommonTitleWord(field.id, 'やりとり')"
-          >
-            やりとり
-          </button>
-        </div>
-        <button
-            type="button"
-            class="edit-trigger"
-            aria-label="フォームを編集"
-            (click)="openFieldModal(field)"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25Zm17.71-10.04a1.003 1.003 0 0 0 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.96 1.96 3.75 3.75 2.13-2.79Z"
-              />
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path [attr.d]="field.expanded ? 'm5 12 5-5 5 5' : 'm5 8 5 5 5-5'" />
             </svg>
           </button>
-      </div>
 
-      @if (field.expanded) {
-      <div class="field-content">
-        <textarea
-          class="field-content-textarea"
-          [value]="field.content"
-          (input)="handleFieldChange($event, field.id, 'content')"
-          name="field-content"
-          rows="8"
-          placeholder="内容"
-        ></textarea>
-      </div>
+          <span class="field-number">{{ index + 1 }}</span>
+          <label class="visually-hidden" [for]="'field-title-' + field.id">
+            フィールド{{ index + 1 }}のタイトル
+          </label>
+          <input
+            class="title-input"
+            [id]="'field-title-' + field.id"
+            [value]="field.title"
+            (input)="handleFieldChange($event, field.id, 'title')"
+            name="field-title"
+            type="text"
+            placeholder="タイトル"
+          />
+
+          <div class="field-actions" aria-label="フィールド操作">
+            <button
+              type="button"
+              class="icon-button"
+              [disabled]="first"
+              aria-label="1つ上へ移動"
+              (click)="moveFieldUp(field)"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 12 5-5 5 5" /></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              [disabled]="last"
+              aria-label="1つ下へ移動"
+              (click)="moveFieldDown(field)"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5" /></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button delete-btn"
+              aria-label="フィールドを削除"
+              (click)="removeField(field)"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M6.5 6.5v8m3.5-8v8m3.5-8v8M4 4.5h12M8 4.5V3h4v1.5M5 4.5l.7 12h8.6l.7-12" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="quick-titles" aria-label="よく使うタイトル">
+          <span>候補</span>
+          <button type="button" (click)="setCommonTitleWord(field.id, '出力内容')">出力内容</button>
+          <button type="button" (click)="setCommonTitleWord(field.id, 'エラー内容')">エラー内容</button>
+          <button type="button" (click)="setCommonTitleWord(field.id, 'やりとり')">やりとり</button>
+        </div>
+
+        @if (field.expanded) {
+        <div class="field-content" [id]="'field-content-' + field.id">
+          <label class="visually-hidden" [for]="'field-body-' + field.id">
+            フィールド{{ index + 1 }}の内容
+          </label>
+          <textarea
+            class="field-content-textarea"
+            [id]="'field-body-' + field.id"
+            [value]="field.content"
+            (input)="handleFieldChange($event, field.id, 'content')"
+            name="field-content"
+            rows="7"
+            placeholder="補足する内容を入力してください"
+          ></textarea>
+        </div>
+        }
+      </article>
       }
     </div>
-    }
-  </div>
 
-  <button id="add-field-btn" type="button" (click)="addField()">
-    追加
-  </button>
-</form>
-
-@if (editingField(); as activeField) {
-<div class="modal-backdrop" (click)="closeModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <button
-      type="button"
-      class="modal-close"
-      aria-label="閉じる"
-      (click)="closeModal()"
-    >
-      ×
+    <button id="add-field-btn" class="add-field-btn" type="button" (click)="addField()">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+      フィールドを追加
     </button>
-    <h4>フォーム編集</h4>
-    <label>
-      タイトル
-      <input
-        type="text"
-        [value]="activeField.title"
-        (input)="handleFieldChange($event, activeField.id, 'title')"
-      />
-    </label>
-    <label>
-      内容
-      <textarea
-        rows="14"
-        [value]="activeField.content"
-        (input)="handleFieldChange($event, activeField.id, 'content')"
-      ></textarea>
-    </label>
-  </div>
-</div>
-}
+  </section>
+</form>

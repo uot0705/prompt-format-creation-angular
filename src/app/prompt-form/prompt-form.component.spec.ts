@@ -44,14 +44,16 @@ describe('PromptFormComponent', () => {
       providers: [PromptFormStore],
     });
 
-    const errorCheckbox = screen.getByLabelText('エラー相談') as HTMLInputElement;
-    fireEvent.click(errorCheckbox);
+    const errorPreset = screen.getByRole('button', {
+      name: 'エラー相談',
+    }) as HTMLButtonElement;
+    fireEvent.click(errorPreset);
     fixture.detectChanges();
     await fixture.whenStable();
 
     const mainQuestion = getMainQuestionTextarea(container);
     expect(mainQuestion.value).toBe('以下のエラー内容を解決してください');
-    expect(errorCheckbox.checked).toBeTrue();
+    expect(errorPreset.getAttribute('aria-pressed')).toBe('true');
 
     const titleInputs = getTitleInputs(container);
     expect(titleInputs.length).toBe(2);
@@ -68,7 +70,9 @@ describe('PromptFormComponent', () => {
       providers: [PromptFormStore],
     });
 
-    const addButton = screen.getByText('追加');
+    const addButton = screen.getByRole('button', {
+      name: 'フィールドを追加',
+    });
     fireEvent.click(addButton);
     fixture.detectChanges();
 
@@ -88,16 +92,19 @@ describe('PromptFormComponent', () => {
     fixture.detectChanges();
 
     expect(store.browserTabTitle()).toBe('確認用のタブタイトル');
-    expect(browserTabTitleInput.placeholder).toContain('空欄なら');
+    expect(browserTabTitleInput.getAttribute('aria-describedby')).toBe(
+      'browser-tab-title-help'
+    );
   });
 
-  it('質問内容編集ボタンとモーダルは表示されない', async () => {
+  it('大型編集モーダルのボタンと表示領域は存在しない', async () => {
     const { container } = await render(PromptFormComponent, {
       providers: [PromptFormStore],
     });
 
-    expect(screen.queryByLabelText('質問内容を編集')).toBeNull();
-    expect(container.textContent).not.toContain('質問内容の編集');
+    expect(screen.queryByLabelText('フォームを編集')).toBeNull();
+    expect(container.querySelector('.modal-backdrop')).toBeNull();
+    expect(container.textContent).not.toContain('フォーム編集');
   });
 
   it('フィールドを折りたたむと内容が非表示になる', async () => {
@@ -118,6 +125,7 @@ describe('PromptFormComponent', () => {
     fixture.detectChanges();
     const firstField = getFieldContainers(container)[0];
     expect(firstField.querySelector('.field-content')).toBeNull();
+    expect(toggleButton.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('フィールドを削除すると行が減る', async () => {
@@ -142,26 +150,28 @@ describe('PromptFormComponent', () => {
       providers: [PromptFormStore],
     });
 
-    fireEvent.click(screen.getByText('追加'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'フィールドを追加' })
+    );
     fixture.detectChanges();
 
     const titleInputs = getTitleInputs(container);
     fireEvent.input(titleInputs[0], { target: { value: 'First' } });
     fireEvent.input(titleInputs[1], { target: { value: 'Second' } });
 
-    let headerButtons = container.querySelectorAll<HTMLButtonElement>(
-      '.field .header-buttons button'
-    );
-    fireEvent.click(headerButtons[1]);
+    let moveDownButtons = screen.getAllByRole('button', {
+      name: '1つ下へ移動',
+    });
+    fireEvent.click(moveDownButtons[0]);
     fixture.detectChanges();
 
     const titlesAfterDown = getTitleInputs(container).map((input) => input.value);
     expect(titlesAfterDown).toEqual(['Second', 'First']);
 
-    headerButtons = container.querySelectorAll<HTMLButtonElement>(
-      '.field .header-buttons button'
-    );
-    fireEvent.click(headerButtons[3]);
+    const moveUpButtons = screen.getAllByRole('button', {
+      name: '1つ上へ移動',
+    });
+    fireEvent.click(moveUpButtons[1]);
     fixture.detectChanges();
 
     const titlesAfterUp = getTitleInputs(container).map((input) => input.value);

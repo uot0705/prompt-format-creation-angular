@@ -4,6 +4,16 @@ import { PromptFormStore } from '../prompt-form/prompt-form.store';
 import { PromptOutputComponent } from './prompt-output.component';
 
 describe('PromptOutputComponent', () => {
+  it('未入力時は空状態を表示し、空のフィールドをプレビューしない', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const component = fixture.componentInstance as PromptOutputComponent;
+
+    expect(screen.getByText('ここにプレビューが表示されます')).toBeTruthy();
+    expect((component as any).fieldsOutputForDisplay()).toBe('');
+  });
+
   it('入力内容の変更がプレビュー出力に反映される', async () => {
     const { fixture } = await render(PromptOutputComponent, {
       providers: [PromptFormStore],
@@ -96,6 +106,35 @@ describe('PromptOutputComponent', () => {
 
     expect((component as any).historyOpen()).toBeFalse();
     expect(container.querySelector('.history-overlay')).toBeNull();
+  });
+
+  it('履歴ダイアログはEscapeで閉じて起点へフォーカスを戻す', async () => {
+    spyOn(copyHistoryCache, 'getHistory').and.returnValue([]);
+    const { container, fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+
+    const historyButton =
+      container.querySelector<HTMLButtonElement>('#history-btn');
+    if (!historyButton) {
+      throw new Error('history button not found');
+    }
+
+    fireEvent.click(historyButton);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const dialog = screen.getByRole('dialog', {
+      name: '以前の内容を復元',
+    });
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(historyButton);
   });
 
   it('履歴適用でスナップショット有無の復元が行われる', async () => {
