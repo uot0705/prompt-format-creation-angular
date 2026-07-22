@@ -4,6 +4,7 @@
 
 .preview-workspace {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 100%;
 }
@@ -16,6 +17,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  min-width: 0;
   min-height: 5.2rem;
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid rgba(255, 255, 255, 0.8);
@@ -46,6 +48,7 @@
 .copy-actions {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: var(--space-2);
 }
 
@@ -183,6 +186,7 @@
 }
 
 .preview-scroll {
+  min-width: 0;
   min-height: 0;
   padding: var(--space-6);
 }
@@ -197,7 +201,7 @@
   background: var(--color-surface-solid);
   box-shadow: 0 8px 28px rgba(22, 24, 29, 0.08);
   color: #26282c;
-
+  overflow-wrap: anywhere;
 }
 
 .preview-document ::ng-deep {
@@ -216,6 +220,7 @@
   }
 
   pre {
+    max-width: 100%;
     overflow: auto;
     padding: var(--space-4);
     border-radius: var(--radius-sm);
