@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/angular';
+import { fireEvent, render, screen, within } from '@testing-library/angular';
 import { copyHistoryCache, type CopyHistoryItem } from '../copy-history-cache';
 import { PromptFormStore } from '../prompt-form/prompt-form.store';
 import { PromptOutputComponent } from './prompt-output.component';
@@ -283,5 +283,155 @@ describe('PromptOutputComponent', () => {
 
     (component as any).hideHistoryPreview();
     expect((component as any).historyPreview()).toBeNull();
+  });
+
+  it('全入力欄の一致数と現在位置を画面順で表示する', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    store.setMainQuestion('foo foo');
+    store.setBrowserTabTitle('foo');
+    store.setFields([
+      { id: 1, title: 'foo', content: 'foo foo', expanded: false },
+    ]);
+    fixture.detectChanges();
+
+    fireEvent.click(screen.getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+    fireEvent.input(screen.getByLabelText('変換する文字'), {
+      target: { value: 'foo' },
+    });
+    fixture.detectChanges();
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'プロンプト全体を置換',
+    });
+    expect(within(dialog).getByText('一致 1 / 6')).toBeTruthy();
+    expect(within(dialog).getByText('質問内容')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '次の一致' }));
+    fixture.detectChanges();
+    expect(within(dialog).getByText('一致 2 / 6')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '次の一致' }));
+    fixture.detectChanges();
+    expect(within(dialog).getByText('ブラウザタブのタイトル')).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: '前の一致' }));
+    fixture.detectChanges();
+    expect(within(dialog).getByText('一致 2 / 6')).toBeTruthy();
+  });
+
+  it('1件置換で現在箇所だけを変更して次の一致へ進む', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    store.setMainQuestion('foo foo');
+    store.setBrowserTabTitle('foo');
+    fixture.detectChanges();
+
+    fireEvent.click(screen.getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+    const dialog = screen.getByRole('dialog', {
+      name: 'プロンプト全体を置換',
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換する文字'), {
+      target: { value: 'foo' },
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換後の文字'), {
+      target: { value: 'bar' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+
+    expect(store.mainQuestion()).toBe('bar foo');
+    expect(store.browserTabTitle()).toBe('foo');
+    expect(within(dialog).getByText('1件置換しました。残り2件です')).toBeTruthy();
+    expect(within(dialog).getByText('一致 1 / 2')).toBeTruthy();
+  });
+
+  it('すべて置換は開始時点の一致だけを変更する', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    store.setMainQuestion('a a');
+    store.setBrowserTabTitle('a');
+    store.setFields([
+      { id: 1, title: 'a', content: 'a a', expanded: false },
+    ]);
+    fixture.detectChanges();
+
+    fireEvent.click(screen.getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+    const dialog = screen.getByRole('dialog', {
+      name: 'プロンプト全体を置換',
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換する文字'), {
+      target: { value: 'a' },
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換後の文字'), {
+      target: { value: 'aa' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'すべて置換' }));
+    fixture.detectChanges();
+
+    expect(within(dialog).getByText('6件置換しました')).toBeTruthy();
+    expect(store.mainQuestion()).toBe('aa aa');
+    expect(store.browserTabTitle()).toBe('aa');
+    expect(store.fields()[0].content).toBe('aa aa');
+  });
+
+  it('空検索と0件では置換操作を無効化する', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    store.setMainQuestion('sample');
+    fixture.detectChanges();
+
+    fireEvent.click(screen.getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+    const dialog = screen.getByRole('dialog', {
+      name: 'プロンプト全体を置換',
+    });
+    const replaceButton = within(dialog).getByRole('button', { name: '置換' });
+    const replaceAllButton = within(dialog).getByRole('button', {
+      name: 'すべて置換',
+    });
+    expect((replaceButton as HTMLButtonElement).disabled).toBeTrue();
+    expect((replaceAllButton as HTMLButtonElement).disabled).toBeTrue();
+
+    fireEvent.input(within(dialog).getByLabelText('変換する文字'), {
+      target: { value: 'missing' },
+    });
+    fixture.detectChanges();
+    expect(within(dialog).getByText('一致 0 / 0')).toBeTruthy();
+    expect((replaceButton as HTMLButtonElement).disabled).toBeTrue();
+    expect((replaceAllButton as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('置換ダイアログはEscapeで閉じて起点へフォーカスを戻す', async () => {
+    const { container, fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const replaceButton = container.querySelector<HTMLButtonElement>('#replace-btn');
+    if (!replaceButton) {
+      throw new Error('replace button not found');
+    }
+
+    fireEvent.click(replaceButton);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(screen.getByLabelText('変換する文字'));
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(replaceButton);
   });
 });

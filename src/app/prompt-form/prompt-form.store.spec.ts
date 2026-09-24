@@ -66,4 +66,73 @@ describe('PromptFormStore', () => {
     );
     expect(store.resolvedBrowserTabTitle().endsWith('…')).toBeTrue();
   });
+
+  it('指定した1件だけを置換し、一致が古い場合は変更しない', () => {
+    const store = new PromptFormStore();
+    store.setMainQuestion('foo foo');
+    store.setFields([
+      { id: 7, title: 'foo title', content: 'body foo', expanded: true },
+    ]);
+
+    expect(
+      store.replaceTextOccurrence(
+        { kind: 'mainQuestion' },
+        4,
+        'foo',
+        'bar'
+      )
+    ).toBeTrue();
+    expect(store.mainQuestion()).toBe('foo bar');
+
+    expect(
+      store.replaceTextOccurrence(
+        { kind: 'fieldContent', fieldId: 7 },
+        0,
+        'foo',
+        'bar'
+      )
+    ).toBeFalse();
+    expect(store.fields()[0].content).toBe('body foo');
+  });
+
+  it('すべての入力欄を置換し、開始時点の一致数を返す', () => {
+    const store = new PromptFormStore();
+    store.setMainQuestion('a a');
+    store.setBrowserTabTitle('a');
+    store.setFields([
+      { id: 1, title: 'a', content: 'a a', expanded: false },
+    ]);
+
+    const count = store.replaceAllText('a', 'aa');
+
+    expect(count).toBe(6);
+    expect(store.mainQuestion()).toBe('aa aa');
+    expect(store.browserTabTitle()).toBe('aa');
+    expect(store.fields()[0]).toEqual(
+      jasmine.objectContaining({ title: 'aa', content: 'aa aa', expanded: false })
+    );
+  });
+
+  it('空の検索文字では一括置換しない', () => {
+    const store = new PromptFormStore();
+    store.setMainQuestion('unchanged');
+
+    expect(store.replaceAllText('', 'x')).toBe(0);
+    expect(store.mainQuestion()).toBe('unchanged');
+  });
+
+  it('置換後が空文字なら一致箇所を削除する', () => {
+    const store = new PromptFormStore();
+    store.setMainQuestion('remove this');
+
+    expect(
+      store.replaceTextOccurrence(
+        { kind: 'mainQuestion' },
+        0,
+        'remove ',
+        ''
+      )
+    ).toBeTrue();
+    expect(store.mainQuestion()).toBe('this');
+  });
 });

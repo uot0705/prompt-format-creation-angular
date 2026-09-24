@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/angular';
+import { fireEvent, render, screen, within } from '@testing-library/angular';
 import { AppComponent } from './app.component';
 import {
   DEFAULT_BROWSER_TAB_TITLE,
@@ -39,5 +39,28 @@ describe('AppComponent', () => {
 
     expect(Array.from(document.title).length).toBe(MAX_BROWSER_TAB_TITLE_LENGTH);
     expect(document.title.endsWith('…')).toBeTrue();
+  });
+
+  it('置換したブラウザタブタイトルがdocument.titleに反映される', async () => {
+    const { fixture } = await render(AppComponent);
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    store.setBrowserTabTitle('old title');
+    fixture.detectChanges();
+
+    fireEvent.click(screen.getByRole('button', { name: '置換' }));
+    fixture.detectChanges();
+    const dialog = screen.getByRole('dialog', {
+      name: 'プロンプト全体を置換',
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換する文字'), {
+      target: { value: 'old' },
+    });
+    fireEvent.input(within(dialog).getByLabelText('変換後の文字'), {
+      target: { value: 'new' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'すべて置換' }));
+    fixture.detectChanges();
+
+    expect(document.title).toBe('new title');
   });
 });

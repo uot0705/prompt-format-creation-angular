@@ -17,12 +17,28 @@ import {
   PromptFormStore,
   type Field,
   type PresetType,
+  type ReplaceTextTarget,
 } from '../prompt-form/prompt-form.store';
 
 type HistoryPreview = {
   text: string;
   top: number;
   left: number;
+};
+
+type ReplaceMatch = {
+  target: ReplaceTextTarget;
+  entryIndex: number;
+  label: string;
+  text: string;
+  start: number;
+  end: number;
+};
+
+type MatchPreview = {
+  before: string;
+  match: string;
+  after: string;
 };
 
 type PromptExportPayload = {
@@ -49,9 +65,16 @@ const CURRENT_SCHEMA_VERSION = 1;
 export class PromptOutputComponent {
   private readonly formStore = inject(PromptFormStore);
   private historyTrigger: HTMLElement | null = null;
+  private replaceTrigger: HTMLElement | null = null;
 
   @ViewChild('historyModal')
   private historyModal?: ElementRef<HTMLElement>;
+
+  @ViewChild('replaceModal')
+  private replaceModal?: ElementRef<HTMLElement>;
+
+  @ViewChild('replaceSearchInput')
+  private replaceSearchInput?: ElementRef<HTMLInputElement>;
 
   protected readonly schemaVersionLabel = `ver${CURRENT_SCHEMA_VERSION}`;
 
@@ -74,6 +97,48 @@ export class PromptOutputComponent {
   protected readonly historyPreview = signal<HistoryPreview | null>(null);
   // インポート/エクスポートのメニュー表示を管理する。
   protected readonly importExportOpen = signal(false);
+  // 置換ダイアログと入力値、現在位置を管理する。
+  protected readonly replaceOpen = signal(false);
+  protected readonly replaceSearchText = signal('');
+  protected readonly replacementText = signal('');
+  protected readonly selectedMatchIndex = signal(0);
+  protected readonly replaceStatus = signal('');
+
+  // 現在のフォーム全体から、検索文字に一致する箇所を画面順で抽出する。
+  protected readonly replaceMatches = computed(() =>
+    this.findReplaceMatches(this.replaceSearchText())
+  );
+  protected readonly normalizedMatchIndex = computed(() => {
+    const count = this.replaceMatches().length;
+    return count === 0 ? 0 : this.selectedMatchIndex() % count;
+  });
+  protected readonly currentReplaceMatch = computed(
+    () => this.replaceMatches()[this.normalizedMatchIndex()] ?? null
+  );
+  protected readonly matchPositionLabel = computed(() => {
+    const count = this.replaceMatches().length;
+    return count === 0 ? '0 / 0' : `${this.normalizedMatchIndex() + 1} / ${count}`;
+  });
+  protected readonly currentMatchPreview = computed<MatchPreview | null>(() => {
+    const match = this.currentReplaceMatch();
+    if (!match) {
+      return null;
+    }
+
+    const contextLength = 42;
+    const beforeStart = Math.max(0, match.start - contextLength);
+    const afterEnd = Math.min(match.text.length, match.end + contextLength);
+    return {
+      before: `${beforeStart > 0 ? '…' : ''}${match.text.slice(
+        beforeStart,
+        match.start
+      )}`,
+      match: match.text.slice(match.start, match.end),
+      after: `${match.text.slice(match.end, afterEnd)}${
+        afterEnd < match.text.length ? '…' : ''
+      }`,
+    };
+  });
 
   // Markdown から右ペインの表示用HTMLを生成する。
   protected readonly mainQuestionOutput = computed(() =>
@@ -130,10 +195,114 @@ export class PromptOutputComponent {
     queueMicrotask(() => this.historyTrigger?.focus());
   }
 
+  // 置換ダイアログを初期状態で開く。
+  protected openReplaceModal(event?: Event): void {
+    this.replaceTrigger = event?.currentTarget as HTMLElement | null;
+    this.replaceSearchText.set('');
+    this.replacementText.set('');
+    this.selectedMatchIndex.set(0);
+    this.replaceStatus.set('');
+    this.replaceOpen.set(true);
+    this.historyOpen.set(false);
+    this.importExportOpen.set(false);
+    queueMicrotask(() => this.replaceSearchInput?.nativeElement.focus());
+  }
+
+  // 置換ダイアログを閉じ、起点のボタンへフォーカスを戻す。
+  protected closeReplaceModal(): void {
+    this.replaceOpen.set(false);
+    queueMicrotask(() => this.replaceTrigger?.focus());
+  }
+
+  // 検索文字の変更時は最初の一致へ戻る。
+  protected handleReplaceSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.replaceSearchText.set(input.value);
+    this.selectedMatchIndex.set(0);
+    this.replaceStatus.set('');
+  }
+
+  // 置換後の文字を更新する。
+  protected handleReplacementInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.replacementText.set(input.value);
+    this.replaceStatus.set('');
+  }
+
+  // 一致箇所を前後に循環移動する。
+  protected selectPreviousMatch(): void {
+    const count = this.replaceMatches().length;
+    if (count === 0) {
+      return;
+    }
+    this.selectedMatchIndex.set((this.normalizedMatchIndex() - 1 + count) % count);
+  }
+
+  protected selectNextMatch(): void {
+    const count = this.replaceMatches().length;
+    if (count === 0) {
+      return;
+    }
+    this.selectedMatchIndex.set((this.normalizedMatchIndex() + 1) % count);
+  }
+
+  // 現在選択されている一致だけを置換し、次の一致へ進む。
+  protected replaceCurrentMatch(): void {
+    const match = this.currentReplaceMatch();
+    const searchText = this.replaceSearchText();
+    if (!match || !searchText) {
+      return;
+    }
+
+    const resumeOffset = match.start + this.replacementText().length;
+    const replaced = this.formStore.replaceTextOccurrence(
+      match.target,
+      match.start,
+      searchText,
+      this.replacementText()
+    );
+    if (!replaced) {
+      this.selectedMatchIndex.set(0);
+      this.replaceStatus.set('一致箇所が変更されたため、再検索しました');
+      return;
+    }
+
+    const nextMatches = this.replaceMatches();
+    const nextIndex = nextMatches.findIndex(
+      (candidate) =>
+        candidate.entryIndex > match.entryIndex ||
+        (candidate.entryIndex === match.entryIndex && candidate.start >= resumeOffset)
+    );
+    this.selectedMatchIndex.set(nextIndex >= 0 ? nextIndex : 0);
+    this.replaceStatus.set(
+      `1件置換しました。残り${nextMatches.length}件です`
+    );
+  }
+
+  // フォーム全体にある開始時点の一致を一括置換する。
+  protected replaceAllMatches(): void {
+    const searchText = this.replaceSearchText();
+    if (!searchText || this.replaceMatches().length === 0) {
+      return;
+    }
+
+    const count = this.formStore.replaceAllText(
+      searchText,
+      this.replacementText()
+    );
+    this.selectedMatchIndex.set(0);
+    this.replaceStatus.set(`${count}件置換しました`);
+  }
+
   // ダイアログをEscapeで閉じ、Tab移動をダイアログ内に保つ。
   @HostListener('document:keydown', ['$event'])
   protected handleDocumentKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
+      if (this.replaceOpen()) {
+        event.preventDefault();
+        this.closeReplaceModal();
+        return;
+      }
       if (this.historyOpen()) {
         event.preventDefault();
         this.closeHistoryModal();
@@ -142,8 +311,10 @@ export class PromptOutputComponent {
       this.importExportOpen.set(false);
     }
 
-    if (event.key === 'Tab' && this.historyOpen()) {
-      this.trapHistoryFocus(event);
+    if (event.key === 'Tab' && this.replaceOpen()) {
+      this.trapDialogFocus(event, this.replaceModal?.nativeElement);
+    } else if (event.key === 'Tab' && this.historyOpen()) {
+      this.trapDialogFocus(event, this.historyModal?.nativeElement);
     }
   }
 
@@ -245,8 +416,10 @@ export class PromptOutputComponent {
   }
 
   // 履歴ダイアログからキーボードフォーカスが抜けないようにする。
-  private trapHistoryFocus(event: KeyboardEvent): void {
-    const modal = this.historyModal?.nativeElement;
+  private trapDialogFocus(
+    event: KeyboardEvent,
+    modal: HTMLElement | undefined
+  ): void {
     if (!modal) {
       return;
     }
@@ -272,6 +445,57 @@ export class PromptOutputComponent {
       event.preventDefault();
       first.focus();
     }
+  }
+
+  // 検索対象を画面上の入力順に並べ、一致位置を列挙する。
+  private findReplaceMatches(searchText: string): ReplaceMatch[] {
+    if (!searchText) {
+      return [];
+    }
+
+    const entries: Array<{
+      target: ReplaceTextTarget;
+      label: string;
+      text: string;
+    }> = [
+      {
+        target: { kind: 'mainQuestion' },
+        label: '質問内容',
+        text: this.mainQuestion(),
+      },
+      {
+        target: { kind: 'browserTabTitle' },
+        label: 'ブラウザタブのタイトル',
+        text: this.browserTabTitle(),
+      },
+      ...this.fields().flatMap((field, index) => [
+        {
+          target: { kind: 'fieldTitle', fieldId: field.id } as ReplaceTextTarget,
+          label: `フィールド${index + 1}のタイトル`,
+          text: field.title,
+        },
+        {
+          target: { kind: 'fieldContent', fieldId: field.id } as ReplaceTextTarget,
+          label: `フィールド${index + 1}の内容`,
+          text: field.content,
+        },
+      ]),
+    ];
+
+    return entries.flatMap((entry, entryIndex) => {
+      const matches: ReplaceMatch[] = [];
+      let start = entry.text.indexOf(searchText);
+      while (start !== -1) {
+        matches.push({
+          ...entry,
+          entryIndex,
+          start,
+          end: start + searchText.length,
+        });
+        start = entry.text.indexOf(searchText, start + searchText.length);
+      }
+      return matches;
+    });
   }
 
   // 履歴の内容をフォームへ反映し、モーダルを閉じる。

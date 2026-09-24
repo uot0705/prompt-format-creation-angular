@@ -18,6 +18,18 @@
         履歴
       </button>
 
+      <button
+        id="replace-btn"
+        type="button"
+        class="secondary-button"
+        (click)="openReplaceModal($event)"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3.5 6.5h10m0 0-3-3m3 3-3 3M16.5 13.5h-10m0 0 3 3m-3-3 3-3" />
+        </svg>
+        置換
+      </button>
+
       <div class="import-export">
         <button
           type="button"
@@ -103,6 +115,114 @@
     }
   </div>
 </section>
+
+@if (replaceOpen()) {
+<div class="history-overlay replace-overlay" (click)="closeReplaceModal()">
+  <section
+    #replaceModal
+    class="replace-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="replace-title"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="replace-modal-header">
+      <div>
+        <p class="eyebrow">検索と置換</p>
+        <h2 id="replace-title">プロンプト全体を置換</h2>
+      </div>
+      <button
+        type="button"
+        class="icon-button replace-close-btn"
+        aria-label="置換を閉じる"
+        (click)="closeReplaceModal()"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+      </button>
+    </header>
+
+    <div class="replace-fields">
+      <label for="replace-search">変換する文字</label>
+      <input
+        #replaceSearchInput
+        id="replace-search"
+        type="text"
+        autocomplete="off"
+        [value]="replaceSearchText()"
+        (input)="handleReplaceSearchInput($event)"
+        placeholder="検索する文字を入力"
+      />
+
+      <label for="replace-with">変換後の文字</label>
+      <input
+        id="replace-with"
+        type="text"
+        autocomplete="off"
+        [value]="replacementText()"
+        (input)="handleReplacementInput($event)"
+        placeholder="空欄の場合は削除"
+      />
+    </div>
+
+    <div class="replace-match-toolbar">
+      <span class="match-count" aria-live="polite">一致 {{ matchPositionLabel() }}</span>
+      <div class="match-navigation" aria-label="一致箇所の移動">
+        <button
+          type="button"
+          class="icon-button"
+          [disabled]="replaceMatches().length === 0"
+          aria-label="前の一致"
+          (click)="selectPreviousMatch()"
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12 5-5 5 5 5" /></svg>
+        </button>
+        <button
+          type="button"
+          class="icon-button"
+          [disabled]="replaceMatches().length === 0"
+          aria-label="次の一致"
+          (click)="selectNextMatch()"
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m8 5 5 5-5 5" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="replace-preview" aria-live="polite">
+      @if (!replaceSearchText()) {
+      <p class="replace-empty">検索する文字を入力すると、一致箇所を表示します。</p>
+      } @else if (currentReplaceMatch() && currentMatchPreview()) {
+      <p class="replace-location">{{ currentReplaceMatch()!.label }}</p>
+      <p class="replace-context"><span>{{ currentMatchPreview()!.before }}</span><mark>{{ currentMatchPreview()!.match }}</mark><span>{{ currentMatchPreview()!.after }}</span></p>
+      } @else {
+      <p class="replace-empty">一致する文字はありません。</p>
+      }
+    </div>
+
+    <p class="replace-status" aria-live="polite">{{ replaceStatus() }}</p>
+
+    <footer class="replace-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="replaceMatches().length === 0"
+        (click)="replaceCurrentMatch()"
+      >
+        置換
+      </button>
+      <button
+        type="button"
+        class="replace-all-btn"
+        [disabled]="replaceMatches().length === 0"
+        (click)="replaceAllMatches()"
+      >
+        すべて置換
+      </button>
+    </footer>
+  </section>
+</div>
+}
 
 @if (historyOpen()) {
 <div class="history-overlay" (click)="closeHistoryModal()">

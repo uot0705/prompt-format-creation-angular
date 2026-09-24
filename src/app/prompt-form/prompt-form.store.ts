@@ -16,6 +16,12 @@ export type Field = {
   expanded: boolean;
 };
 
+export type ReplaceTextTarget =
+  | { kind: 'mainQuestion' }
+  | { kind: 'browserTabTitle' }
+  | { kind: 'fieldTitle'; fieldId: number }
+  | { kind: 'fieldContent'; fieldId: number };
+
 @Injectable()
 export class PromptFormStore {
   // 空のフィールドひな形を保持する。
@@ -133,6 +139,94 @@ export class PromptFormStore {
   // 共通ワードボタンからタイトルをセットする。
   setCommonTitleWord(fieldId: number, word: string): void {
     this.updateField(fieldId, word, 'title');
+  }
+
+  // 指定された入力欄の一致箇所だけを置換する。
+  replaceTextOccurrence(
+    target: ReplaceTextTarget,
+    start: number,
+    searchText: string,
+    replacementText: string
+  ): boolean {
+    if (!searchText || start < 0) {
+      return false;
+    }
+
+    const replaceAt = (value: string): string | null => {
+      if (value.slice(start, start + searchText.length) !== searchText) {
+        return null;
+      }
+      return `${value.slice(0, start)}${replacementText}${value.slice(
+        start + searchText.length
+      )}`;
+    };
+
+    if (target.kind === 'mainQuestion') {
+      const next = replaceAt(this.mainQuestion());
+      if (next === null) {
+        return false;
+      }
+      this.mainQuestion.set(next);
+      return true;
+    }
+
+    if (target.kind === 'browserTabTitle') {
+      const next = replaceAt(this.browserTabTitle());
+      if (next === null) {
+        return false;
+      }
+      this.browserTabTitle.set(next);
+      return true;
+    }
+
+    let replaced = false;
+    this.fields.update((fields) =>
+      fields.map((field) => {
+        if (field.id !== target.fieldId) {
+          return field;
+        }
+
+        const fieldType = target.kind === 'fieldTitle' ? 'title' : 'content';
+        const next = replaceAt(field[fieldType]);
+        if (next === null) {
+          return field;
+        }
+
+        replaced = true;
+        return { ...field, [fieldType]: next };
+      })
+    );
+    return replaced;
+  }
+
+  // すべての入力欄にある一致を、開始時点の件数分まとめて置換する。
+  replaceAllText(searchText: string, replacementText: string): number {
+    if (!searchText) {
+      return 0;
+    }
+
+    let replacedCount = 0;
+    const replaceAllInValue = (value: string): string => {
+      const parts = value.split(searchText);
+      const count = parts.length - 1;
+      if (count === 0) {
+        return value;
+      }
+      replacedCount += count;
+      return parts.join(replacementText);
+    };
+
+    this.mainQuestion.update(replaceAllInValue);
+    this.browserTabTitle.update(replaceAllInValue);
+    this.fields.update((fields) =>
+      fields.map((field) => ({
+        ...field,
+        title: replaceAllInValue(field.title),
+        content: replaceAllInValue(field.content),
+      }))
+    );
+
+    return replacedCount;
   }
 
   // フォームの入力内容を初期化する。
