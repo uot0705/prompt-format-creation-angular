@@ -4,6 +4,31 @@ import { PromptFormStore } from '../prompt-form/prompt-form.store';
 import { PromptOutputComponent } from './prompt-output.component';
 
 describe('PromptOutputComponent', () => {
+  it('データ管理は内部クリックで維持し、外側クリックで閉じ、再度開ける', async () => {
+    const { fixture } = await render(PromptOutputComponent, { providers: [PromptFormStore] });
+    const trigger = screen.getByRole('button', { name: 'インポートとエクスポート' });
+    fireEvent.click(trigger);
+    fixture.detectChanges();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+    fireEvent.click(within(screen.getByRole('menu')).getByText('データ管理'));
+    fixture.detectChanges();
+    expect(screen.getByRole('menu')).toBeTruthy();
+
+    fireEvent.click(document.body);
+    fixture.detectChanges();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(trigger);
+    fixture.detectChanges();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    fireEvent.click(trigger);
+    fixture.detectChanges();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
   it('プレビュー表示時にフォーカスを移し、閉じると元のボタンへ戻す', async () => {
     const { fixture } = await render(PromptOutputComponent, { providers: [PromptFormStore] });
     const trigger = screen.getByRole('button', { name: '完成イメージ' });

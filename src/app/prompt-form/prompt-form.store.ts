@@ -292,7 +292,6 @@ export class PromptFormStore {
             '・YESの場合1: 現状のコードの修正箇所を箇条書きで書き出す 2: 修正箇所の修正コードを教えて'
         );
         this.addField('Gitのレビュー指摘内容');
-        this.addField('対象コード');
         break;
       }
       case 'organize': {

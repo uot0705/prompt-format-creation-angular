@@ -385,6 +385,15 @@ export class PromptOutputComponent {
     }
   }
 
+  // メニューと起点のボタン以外を押したら、データ管理を閉じる。
+  @HostListener('document:click', ['$event'])
+  protected handleDocumentClick(event: MouseEvent): void {
+    if (!this.importExportOpen()) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('.import-export')) return;
+    this.importExportOpen.set(false);
+  }
+
   // インポート/エクスポートメニューの開閉を切り替える。
   protected toggleImportExportMenu(): void {
     this.importExportOpen.update((open) => !open);

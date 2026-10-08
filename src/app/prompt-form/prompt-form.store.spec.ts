@@ -16,7 +16,7 @@ describe('PromptFormStore', () => {
   it('レビュー指摘の出力内容はYES/NO判定とYES時の修正手順を指定する', () => {
     const store = new PromptFormStore();
     store.selectPreset('review');
-    expect(store.fields().map(field => field.title)).toEqual(['出力内容', 'Gitのレビュー指摘内容', '対象コード']);
+    expect(store.fields().map(field => field.title)).toEqual(['出力内容', 'Gitのレビュー指摘内容']);
     expect(store.fields()[0].content).toBe(
       'gitの指摘内容を全て確認して指摘内容を一つずつ「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
       '・指摘内容の概要を簡潔に教えて\n' +
