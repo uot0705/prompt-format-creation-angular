@@ -3,11 +3,25 @@
 }
 
 .prompt-form {
-  padding: var(--space-6);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  height: 100%;
 }
 
-.form-section,
+.content-panel,
 .fields-section {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-6);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.content-panel {
+  border-right: 1px solid var(--color-border);
+}
+
+.form-section {
   margin-bottom: 2.2rem;
 }
 
@@ -250,8 +264,21 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 960px) {
   .prompt-form {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .content-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+@media (max-width: 600px) {
+  .content-panel,
+  .fields-section {
     padding: var(--space-4);
   }
 

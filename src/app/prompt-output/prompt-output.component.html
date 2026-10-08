@@ -16,6 +16,22 @@
     </div>
     <div class="copy-actions">
       <button
+        id="preview-btn"
+        type="button"
+        class="secondary-button"
+        aria-label="完成イメージ"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="previewOpen()"
+        (click)="openPreviewModal($event)"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" />
+          <circle cx="10" cy="10" r="2" />
+        </svg>
+        完成イメージ
+      </button>
+
+      <button
         id="history-btn"
         type="button"
         class="secondary-button"
@@ -107,17 +123,31 @@
   </div>
 </ng-template>
 
-<section class="preview-workspace" aria-labelledby="preview-heading">
-  <header class="preview-toolbar">
-    <div>
-      <p class="eyebrow">ライブプレビュー</p>
-      <h2 id="preview-heading">完成イメージ</h2>
-    </div>
+@if (!toolsInHeader()) {
+  <ng-container [ngTemplateOutlet]="toolsTemplate"></ng-container>
+}
 
-    @if (!toolsInHeader()) {
-      <ng-container [ngTemplateOutlet]="toolsTemplate"></ng-container>
-    }
-  </header>
+
+@if (previewOpen()) {
+<div class="history-overlay preview-overlay" (click)="closePreviewModal()">
+  <section
+    #previewModal
+    class="preview-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="preview-heading"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="history-modal-header">
+      <div>
+        <p class="eyebrow">ライブプレビュー</p>
+        <h2 id="preview-heading">完成イメージ</h2>
+      </div>
+      <button type="button" class="icon-button" aria-label="完成イメージを閉じる" (click)="closePreviewModal()">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg>
+      </button>
+    </header>
 
   <div class="preview-scroll">
     @if (!hasPreviewContent()) {
@@ -128,7 +158,7 @@
         </svg>
       </div>
       <h3>ここにプレビューが表示されます</h3>
-      <p>左側に内容を入力すると、完成形がリアルタイムで反映されます。</p>
+      <p>フォームに内容を入力すると、完成形がここに反映されます。</p>
     </div>
     } @else {
     <article id="output" class="preview-document">
@@ -137,7 +167,9 @@
     </article>
     }
   </div>
-</section>
+  </section>
+</div>
+}
 
 @if (replaceOpen()) {
 <div class="history-overlay replace-overlay" (click)="closeReplaceModal()">

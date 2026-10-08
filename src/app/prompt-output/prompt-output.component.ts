@@ -77,6 +77,13 @@ export class PromptOutputComponent {
   }
 
   private readonly formStore = inject(PromptFormStore);
+  private previewTrigger: HTMLElement | null = null;
+
+  @ViewChild('previewModal')
+  private previewModal?: ElementRef<HTMLElement>;
+
+  protected readonly previewOpen = signal(false);
+
   private historyTrigger: HTMLElement | null = null;
   private replaceTrigger: HTMLElement | null = null;
 
@@ -153,7 +160,7 @@ export class PromptOutputComponent {
     };
   });
 
-  // Markdown から右ペインの表示用HTMLを生成する。
+  // Markdown から完成イメージの表示用HTMLを生成する。
   protected readonly mainQuestionOutput = computed(() =>
     marked.parse(this.mainQuestion())
   );
@@ -191,8 +198,23 @@ export class PromptOutputComponent {
       .then(() => undefined);
   }
 
+  protected openPreviewModal(event: Event): void {
+    this.previewTrigger = event.currentTarget as HTMLElement;
+    this.historyOpen.set(false);
+    this.replaceOpen.set(false);
+    this.importExportOpen.set(false);
+    this.previewOpen.set(true);
+    queueMicrotask(() => this.previewModal?.nativeElement.focus());
+  }
+
+  protected closePreviewModal(): void {
+    this.previewOpen.set(false);
+    queueMicrotask(() => this.previewTrigger?.focus());
+  }
+
   // 履歴モーダルを開き、最新の履歴を読み込む。
   protected openHistoryModal(event?: Event): void {
+    this.previewOpen.set(false);
     this.historyTrigger = event?.currentTarget as HTMLElement | null;
     this.historyOpen.set(true);
     this.historyPreview.set(null);
@@ -210,6 +232,7 @@ export class PromptOutputComponent {
 
   // 置換ダイアログを初期状態で開く。
   protected openReplaceModal(event?: Event): void {
+    this.previewOpen.set(false);
     this.replaceTrigger = event?.currentTarget as HTMLElement | null;
     this.replaceSearchText.set('');
     this.replacementText.set('');
@@ -311,6 +334,11 @@ export class PromptOutputComponent {
   @HostListener('document:keydown', ['$event'])
   protected handleDocumentKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
+      if (this.previewOpen()) {
+        event.preventDefault();
+        this.closePreviewModal();
+        return;
+      }
       if (this.replaceOpen()) {
         event.preventDefault();
         this.closeReplaceModal();
@@ -324,7 +352,9 @@ export class PromptOutputComponent {
       this.importExportOpen.set(false);
     }
 
-    if (event.key === 'Tab' && this.replaceOpen()) {
+    if (event.key === 'Tab' && this.previewOpen()) {
+      this.trapDialogFocus(event, this.previewModal?.nativeElement);
+    } else if (event.key === 'Tab' && this.replaceOpen()) {
       this.trapDialogFocus(event, this.replaceModal?.nativeElement);
     } else if (event.key === 'Tab' && this.historyOpen()) {
       this.trapDialogFocus(event, this.historyModal?.nativeElement);

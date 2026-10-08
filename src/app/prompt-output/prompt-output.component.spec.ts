@@ -10,6 +10,9 @@ describe('PromptOutputComponent', () => {
     });
     const component = fixture.componentInstance as PromptOutputComponent;
 
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '完成イメージ' }));
+    fixture.detectChanges();
     expect(screen.getByText('ここにプレビューが表示されます')).toBeTruthy();
     expect((component as any).fieldsOutputForDisplay()).toBe('');
   });
@@ -26,9 +29,34 @@ describe('PromptOutputComponent', () => {
     ]);
     fixture.detectChanges();
 
+    fireEvent.click(screen.getByRole('button', { name: '完成イメージ' }));
+    fixture.detectChanges();
     expect(screen.getByText('Hello')).toBeTruthy();
     expect(screen.getByText('Title 1')).toBeTruthy();
     expect(screen.getByText('Body 1')).toBeTruthy();
+  });
+
+  it('完成イメージをEscapeで閉じ、起点へフォーカスを戻す', async () => {
+    const { fixture } = await render(PromptOutputComponent, {
+      providers: [PromptFormStore],
+    });
+    const trigger = screen.getByRole('button', { name: '完成イメージ' });
+    fireEvent.click(trigger);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const dialog = screen.getByRole('dialog', { name: '完成イメージ' });
+    expect(document.activeElement).toBe(dialog);
+    const close = within(dialog).getByRole('button', { name: '完成イメージを閉じる' });
+    close.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 
   it('コピー時にフォーマット済み文字列と履歴状態が更新される', async () => {

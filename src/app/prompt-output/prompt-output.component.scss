@@ -1,39 +1,21 @@
-:host {
-  background: rgba(246, 247, 249, 0.74);
-}
-
-.preview-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  min-height: 100%;
-}
-
 .preview-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
   min-width: 0;
-  min-height: 5.2rem;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
-  background: rgba(250, 251, 252, 0.76);
-  backdrop-filter: var(--material-blur);
-  -webkit-backdrop-filter: var(--material-blur);
+}
 
-  h2,
-  p {
-    margin: 0;
-  }
-
-  h2 {
-    font-size: 1.05rem;
-    letter-spacing: -0.015em;
-  }
+.preview-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  width: min(58rem, 94vw);
+  height: min(48rem, 88vh);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-solid);
+  box-shadow: 0 28px 80px rgba(12, 14, 18, 0.25);
+  animation: modal-enter 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .eyebrow {
@@ -42,13 +24,14 @@
   font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .copy-actions {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
   flex-wrap: wrap;
+  flex: 0 1 auto;
   gap: var(--space-2);
 }
 
@@ -186,6 +169,7 @@
 }
 
 .preview-scroll {
+  overflow: auto;
   min-width: 0;
   min-height: 0;
   padding: var(--space-6);
@@ -559,12 +543,21 @@
 }
 
 @media (max-width: 600px) {
-  .copy-actions { flex: 1 1 100%; min-width: 0; }
-  .preview-toolbar,
   .preview-scroll {
     padding: var(--space-4);
   }
 
+  .copy-actions {
+    gap: var(--space-1);
+  }
+
+  .copy-actions .secondary-button {
+    padding-inline: var(--space-2);
+  }
+
+  .preview-modal {
+    padding: var(--space-4);
+  }
 
   .replace-overlay {
     align-items: flex-end;
@@ -589,8 +582,4 @@
   .history-preview-tooltip {
     display: none;
   }
-}
-
-@media (max-width: 960px) {
-  .preview-toolbar { position: static; }
 }
