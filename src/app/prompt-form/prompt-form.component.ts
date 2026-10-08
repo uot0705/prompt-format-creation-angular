@@ -1,11 +1,12 @@
 import { afterNextRender, Component, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PromptOutputComponent } from '../prompt-output/prompt-output.component';
 import { PromptFormStore, type Field, type FieldAddPosition, type PresetType } from './prompt-form.store';
 
 @Component({
   selector: 'app-prompt-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PromptOutputComponent],
   templateUrl: './prompt-form.component.html',
   styleUrls: ['./prompt-form.component.scss'],
 })

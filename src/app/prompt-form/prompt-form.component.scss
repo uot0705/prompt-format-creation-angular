@@ -17,6 +17,11 @@
   scrollbar-gutter: stable;
 }
 
+.content-panel app-prompt-output {
+  display: block;
+  margin-top: var(--space-4);
+}
+
 .content-panel {
   border-right: 1px solid var(--color-border);
 }
