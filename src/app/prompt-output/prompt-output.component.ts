@@ -1,6 +1,7 @@
 import {
   Component,
   computed,
+  effect,
   ElementRef,
   HostListener,
   inject,
@@ -9,7 +10,7 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { marked } from 'marked';
 import {
   type CopyHistoryItem,
@@ -79,22 +80,34 @@ export class PromptOutputComponent {
   private readonly formStore = inject(PromptFormStore);
   private previewTrigger: HTMLElement | null = null;
 
-  @ViewChild('previewModal')
   private previewModal?: ElementRef<HTMLElement>;
+  @ViewChild('previewModal')
+  private set previewModalElement(element: ElementRef<HTMLElement> | undefined) {
+    this.previewModal = element;
+    if (element) this.focusAfterRender(() => element.nativeElement);
+  }
 
   protected readonly previewOpen = signal(false);
 
   private historyTrigger: HTMLElement | null = null;
   private replaceTrigger: HTMLElement | null = null;
 
-  @ViewChild('historyModal')
   private historyModal?: ElementRef<HTMLElement>;
+  @ViewChild('historyModal')
+  private set historyModalElement(element: ElementRef<HTMLElement> | undefined) {
+    this.historyModal = element;
+    if (element) this.focusAfterRender(() => element.nativeElement);
+  }
 
   @ViewChild('replaceModal')
   private replaceModal?: ElementRef<HTMLElement>;
 
-  @ViewChild('replaceSearchInput')
   private replaceSearchInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('replaceSearchInput')
+  private set replaceSearchInputElement(element: ElementRef<HTMLInputElement> | undefined) {
+    this.replaceSearchInput = element;
+    if (element) this.focusAfterRender(() => element.nativeElement);
+  }
 
   protected readonly schemaVersionLabel = `ver${CURRENT_SCHEMA_VERSION}`;
 
@@ -178,6 +191,20 @@ export class PromptOutputComponent {
       )
   );
 
+  private readonly document = inject(DOCUMENT);
+
+  private focusAfterRender(getElement: () => HTMLElement | null | undefined): void {
+    queueMicrotask(() => getElement()?.focus({ preventScroll: true }));
+  }
+  // ダイアログ内をスクロールしても背面のページ位置を動かさない。
+  private readonly lockBackgroundScroll = effect((onCleanup) => {
+    if (!this.previewOpen() && !this.historyOpen() && !this.replaceOpen()) return;
+    const elements = [this.document.documentElement, this.document.body];
+    const previous = elements.map(element => element.style.overflow);
+    elements.forEach(element => element.style.overflow = 'hidden');
+    onCleanup(() => elements.forEach((element, index) => element.style.overflow = previous[index]));
+  });
+
   // 画面内容をクリップボードへコピーし、履歴へ保存する。
   protected copyToClipboard(): Promise<void> {
     const mainQuestionFormatted = this.mainQuestion().trim();
@@ -204,12 +231,11 @@ export class PromptOutputComponent {
     this.replaceOpen.set(false);
     this.importExportOpen.set(false);
     this.previewOpen.set(true);
-    queueMicrotask(() => this.previewModal?.nativeElement.focus());
   }
 
   protected closePreviewModal(): void {
     this.previewOpen.set(false);
-    queueMicrotask(() => this.previewTrigger?.focus());
+    this.focusAfterRender(() => this.previewTrigger);
   }
 
   // 履歴モーダルを開き、最新の履歴を読み込む。
@@ -220,14 +246,13 @@ export class PromptOutputComponent {
     this.historyPreview.set(null);
     this.historyItems.set(copyHistoryCache.getHistory());
     this.importExportOpen.set(false);
-    queueMicrotask(() => this.historyModal?.nativeElement.focus());
   }
 
   // 履歴モーダルを閉じてプレビューを解除する。
   protected closeHistoryModal(): void {
     this.historyOpen.set(false);
     this.historyPreview.set(null);
-    queueMicrotask(() => this.historyTrigger?.focus());
+    this.focusAfterRender(() => this.historyTrigger);
   }
 
   // 置換ダイアログを初期状態で開く。
@@ -241,13 +266,12 @@ export class PromptOutputComponent {
     this.replaceOpen.set(true);
     this.historyOpen.set(false);
     this.importExportOpen.set(false);
-    queueMicrotask(() => this.replaceSearchInput?.nativeElement.focus());
   }
 
   // 置換ダイアログを閉じ、起点のボタンへフォーカスを戻す。
   protected closeReplaceModal(): void {
     this.replaceOpen.set(false);
-    queueMicrotask(() => this.replaceTrigger?.focus());
+    this.focusAfterRender(() => this.replaceTrigger);
   }
 
   // 検索文字の変更時は最初の一致へ戻る。
@@ -480,6 +504,11 @@ export class PromptOutputComponent {
 
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
+    if (!modal.contains(this.document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+      return;
+    }
     const active = document.activeElement;
     if (event.shiftKey && (active === first || active === modal)) {
       event.preventDefault();

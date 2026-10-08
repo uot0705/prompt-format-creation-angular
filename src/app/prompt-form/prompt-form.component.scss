@@ -5,6 +5,8 @@
 .prompt-form {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   height: 100%;
 }
 
@@ -15,6 +17,7 @@
   padding: var(--space-6);
   overflow-y: auto;
   scrollbar-gutter: stable;
+  overscroll-behavior-y: contain;
 }
 
 .content-panel app-prompt-output {
@@ -118,7 +121,19 @@
   font-weight: 700;
 }
 
+.fields-toolbar {
+  position: sticky;
+  top: calc(-1 * var(--space-6));
+  z-index: 10;
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) 0;
+  padding: var(--space-6) var(--space-6) var(--space-2);
+  background: var(--color-surface-solid);
+  border-bottom: 1px solid var(--color-border);
+}
+
 .fields-list {
+  margin-top: var(--space-4);
+  overflow-anchor: none;
   display: grid;
   gap: var(--space-3);
 }
@@ -272,7 +287,22 @@
 @media (max-width: 960px) {
   .prompt-form {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
     height: auto;
+  }
+
+  .content-panel,
+  .fields-section {
+    overflow: visible;
+    overscroll-behavior-y: auto;
+  }
+
+  .fields-toolbar {
+    position: static;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
 
   .content-panel {

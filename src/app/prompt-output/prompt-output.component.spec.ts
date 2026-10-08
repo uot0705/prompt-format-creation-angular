@@ -4,6 +4,23 @@ import { PromptFormStore } from '../prompt-form/prompt-form.store';
 import { PromptOutputComponent } from './prompt-output.component';
 
 describe('PromptOutputComponent', () => {
+  it('プレビュー表示時にフォーカスを移し、閉じると元のボタンへ戻す', async () => {
+    const { fixture } = await render(PromptOutputComponent, { providers: [PromptFormStore] });
+    const trigger = screen.getByRole('button', { name: '完成イメージ' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const dialog = screen.getByRole('dialog', { name: '完成イメージ' });
+    expect(document.activeElement).toBe(dialog);
+    expect(document.body.style.overflow).toBe('hidden');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(trigger);
+    expect(document.body.style.overflow).not.toBe('hidden');
+  });
+
   it('未入力時は空状態を表示し、空のフィールドをプレビューしない', async () => {
     const { fixture } = await render(PromptOutputComponent, {
       providers: [PromptFormStore],

@@ -583,3 +583,9 @@
     display: none;
   }
 }
+
+.preview-scroll,
+.history-list,
+.replace-modal {
+  overscroll-behavior: contain;
+}

@@ -1,4 +1,5 @@
 import { afterNextRender, Component, inject, Injector, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PromptOutputComponent } from '../prompt-output/prompt-output.component';
 import { PromptFormStore, type Field, type FieldAddPosition, type PresetType } from './prompt-form.store';
@@ -13,6 +14,7 @@ import { PromptFormStore, type Field, type FieldAddPosition, type PresetType } f
 export class PromptFormComponent {
   private readonly formStore = inject(PromptFormStore);
   private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   // メイン質問の入力値を共有ストアから参照する。
   protected readonly mainQuestion = this.formStore.mainQuestion;
@@ -42,8 +44,29 @@ export class PromptFormComponent {
   protected addField(): void {
     const fieldId = this.formStore.addField('', '', this.addPosition());
     afterNextRender(() => {
-      document.getElementById(`field-title-${fieldId}`)?.focus();
+      const input = this.document.getElementById(`field-title-${fieldId}`);
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      this.revealField(input);
     }, { injector: this.injector });
+  }
+
+
+  // PCでは右ペインだけを動かし、モバイルではページ内の最小限の移動にする。
+  private revealField(input: HTMLElement): void {
+    const panel = input.closest<HTMLElement>('.fields-section');
+    if (!panel) return;
+    if (getComputedStyle(panel).overflowY !== 'auto') {
+      input.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      return;
+    }
+    const panelRect = panel.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const toolbarHeight = panel.querySelector('.fields-toolbar')?.getBoundingClientRect().height ?? 0;
+    const top = panelRect.top + toolbarHeight + 16;
+    const bottom = panelRect.bottom - 16;
+    if (inputRect.top < top) panel.scrollTop += inputRect.top - top;
+    else if (inputRect.bottom > bottom) panel.scrollTop += inputRect.bottom - bottom;
   }
 
   // 指定フィールドを削除する。
