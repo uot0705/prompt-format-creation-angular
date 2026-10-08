@@ -10,14 +10,6 @@ const getMainQuestionTextarea = (container: Element): HTMLTextAreaElement => {
   return element;
 };
 
-const getBrowserTabTitleInput = (container: Element): HTMLInputElement => {
-  const element = container.querySelector<HTMLInputElement>('#browser-tab-title');
-  if (!element) {
-    throw new Error('browser tab title input not found');
-  }
-  return element;
-};
-
 const getTitleInputs = (container: Element): HTMLInputElement[] =>
   Array.from(container.querySelectorAll<HTMLInputElement>('.title-input'));
 
@@ -79,22 +71,25 @@ describe('PromptFormComponent', () => {
     expect(getFieldContainers(container).length).toBe(2);
   });
 
-  it('ブラウザタブタイトル入力がストアに反映される', async () => {
+  it('先頭と末尾への追加で既存の内容と順序を保持する', async () => {
     const { container, fixture } = await render(PromptFormComponent, {
       providers: [PromptFormStore],
     });
     const store = fixture.debugElement.injector.get(PromptFormStore);
-
-    const browserTabTitleInput = getBrowserTabTitleInput(container);
-    fireEvent.input(browserTabTitleInput, {
-      target: { value: '確認用のタブタイトル' },
-    });
+    store.setFields([{ id: 9, title: '既存', content: '保持する本文', expanded: true }]);
     fixture.detectChanges();
 
-    expect(store.browserTabTitle()).toBe('確認用のタブタイトル');
-    expect(browserTabTitleInput.getAttribute('aria-describedby')).toBe(
-      'browser-tab-title-help'
-    );
+    fireEvent.click(screen.getByRole('button', { name: '先頭に追加' }));
+    fireEvent.click(screen.getByRole('button', { name: 'フィールドを追加' }));
+    fixture.detectChanges();
+    expect(getTitleInputs(container).map(input => input.value)).toEqual(['', '既存']);
+    expect(store.fields()[1].content).toBe('保持する本文');
+
+    fireEvent.click(screen.getByRole('button', { name: '末尾に追加' }));
+    fireEvent.click(screen.getByRole('button', { name: 'フィールドを追加' }));
+    fixture.detectChanges();
+    expect(getTitleInputs(container).map(input => input.value)).toEqual(['', '既存', '']);
+    expect(new Set(store.fields().map(field => field.id)).size).toBe(3);
   });
 
   it('大型編集モーダルのボタンと表示領域は存在しない', async () => {

@@ -61,20 +61,7 @@
       placeholder="AIに依頼したい内容を入力してください"
     ></textarea>
 
-    <div class="tab-title-field">
-      <label for="browser-tab-title">ブラウザタブのタイトル</label>
-      <span id="browser-tab-title-help">空欄の場合は質問内容から自動設定されます</span>
-      <input
-        id="browser-tab-title"
-        name="browserTabTitle"
-        type="text"
-        [attr.maxlength]="browserTabTitleMaxLength"
-        [ngModel]="browserTabTitle()"
-        (ngModelChange)="browserTabTitle.set($event)"
-        aria-describedby="browser-tab-title-help"
-        placeholder="任意のタイトル"
-      />
-    </div>
+
   </section>
 
   <section class="fields-section" aria-labelledby="fields-heading">
@@ -84,6 +71,19 @@
         <h2 id="fields-heading">入力フィールド</h2>
       </div>
       <span class="field-count">{{ fields().length }}</span>
+    </div>
+
+    <div class="field-add-controls">
+      <div class="add-position" role="group" aria-label="フィールドの追加位置">
+        <button type="button" [class.active]="addPosition() === 'top'"
+          [attr.aria-pressed]="addPosition() === 'top'" (click)="addPosition.set('top')">先頭に追加</button>
+        <button type="button" [class.active]="addPosition() === 'bottom'"
+          [attr.aria-pressed]="addPosition() === 'bottom'" (click)="addPosition.set('bottom')">末尾に追加</button>
+      </div>
+      <button id="add-field-btn" class="add-field-btn" type="button" (click)="addField()">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+        フィールドを追加
+      </button>
     </div>
 
     <div id="fields-container" class="fields-list">
@@ -176,9 +176,6 @@
       }
     </div>
 
-    <button id="add-field-btn" class="add-field-btn" type="button" (click)="addField()">
-      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
-      フィールドを追加
-    </button>
+
   </section>
 </form>

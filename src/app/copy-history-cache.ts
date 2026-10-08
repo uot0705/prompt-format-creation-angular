@@ -18,7 +18,7 @@ export type CopyHistoryItem = {
 type HistoryListener = (items: CopyHistoryItem[]) => void;
 
 const STORAGE_KEY = 'copyHistoryCache';
-const MAX_HISTORY = 10;
+const MAX_HISTORY = 20;
 const listeners = new Set<HistoryListener>();
 
 const hasWindow = (): boolean => typeof window !== 'undefined';

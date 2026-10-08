@@ -7,6 +7,25 @@ import {
 } from './prompt-form/prompt-form.store';
 
 describe('AppComponent', () => {
+  it('ヘッダーに操作を集約し、タブタイトル入力とプレビューが同期する', async () => {
+    const { container, fixture } = await render(AppComponent);
+    const header = container.querySelector('header.app-header')!;
+    const store = fixture.debugElement.injector.get(PromptFormStore);
+    const titleInput = within(header as HTMLElement).getByLabelText('ブラウザタブのタイトル');
+    fireEvent.input(titleInput, { target: { value: '確認用のタブタイトル' } });
+    fixture.detectChanges();
+    expect(store.browserTabTitle()).toBe('確認用のタブタイトル');
+    expect(document.title).toBe('確認用のタブタイトル');
+    for (const name of ['履歴', '置換', 'インポートとエクスポート', 'コピー']) {
+      expect(within(header as HTMLElement).getByRole('button', { name })).toBeTruthy();
+      expect(screen.getAllByRole('button', { name }).length).toBe(1);
+    }
+    fireEvent.click(within(header as HTMLElement).getByRole('button', { name: 'インポートとエクスポート' }));
+    expect(screen.getByRole('menuitem', { name: 'インポート' })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: 'エクスポート' })).toBeTruthy();
+  });
+
+
   it('フォームとプレビュー領域が表示される', async () => {
     const { container } = await render(AppComponent);
 

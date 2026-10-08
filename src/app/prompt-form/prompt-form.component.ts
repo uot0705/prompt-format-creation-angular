@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { afterNextRender, Component, inject, Injector, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PromptFormStore, type Field, type PresetType } from './prompt-form.store';
+import { PromptFormStore, type Field, type FieldAddPosition, type PresetType } from './prompt-form.store';
 
 @Component({
   selector: 'app-prompt-form',
@@ -11,17 +11,16 @@ import { PromptFormStore, type Field, type PresetType } from './prompt-form.stor
 })
 export class PromptFormComponent {
   private readonly formStore = inject(PromptFormStore);
+  private readonly injector = inject(Injector);
 
   // メイン質問の入力値を共有ストアから参照する。
   protected readonly mainQuestion = this.formStore.mainQuestion;
-  // ブラウザタブ用の任意タイトルを共有ストアから参照する。
-  protected readonly browserTabTitle = this.formStore.browserTabTitle;
+  // 新規フィールドの追加位置。初期値は従来通り末尾。
+  protected readonly addPosition = signal<FieldAddPosition>('bottom');
   // フィールド一覧を共有ストアから参照する。
   protected readonly fields = this.formStore.fields;
   // 選択中のプリセットを共有ストアから参照する。
   protected readonly selectedPreset = this.formStore.selectedPreset;
-  // ブラウザタブ用入力欄の最大文字数を定義する。
-  protected readonly browserTabTitleMaxLength = 120;
 
   // プリセット選択をストアに反映する。
   protected onPresetClick(type: PresetType): void {
@@ -40,7 +39,10 @@ export class PromptFormComponent {
 
   // 空のフィールドを追加する。
   protected addField(): void {
-    this.formStore.addField();
+    const fieldId = this.formStore.addField('', '', this.addPosition());
+    afterNextRender(() => {
+      document.getElementById(`field-title-${fieldId}`)?.focus();
+    }, { injector: this.injector });
   }
 
   // 指定フィールドを削除する。

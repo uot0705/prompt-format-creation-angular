@@ -4,9 +4,12 @@ import {
   ElementRef,
   HostListener,
   inject,
+  input,
+  TemplateRef,
   signal,
   ViewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { marked } from 'marked';
 import {
   type CopyHistoryItem,
@@ -59,10 +62,20 @@ const CURRENT_SCHEMA_VERSION = 1;
 @Component({
   selector: 'app-prompt-output',
   standalone: true,
+  imports: [NgTemplateOutlet],
   templateUrl: './prompt-output.component.html',
   styleUrls: ['./prompt-output.component.scss'],
 })
 export class PromptOutputComponent {
+  readonly toolsInHeader = input(false);
+
+  @ViewChild('toolsTemplate', { static: true })
+  toolsTemplate!: TemplateRef<unknown>;
+
+  protected handleBrowserTabTitleInput(event: Event): void {
+    this.formStore.setBrowserTabTitle((event.target as HTMLInputElement).value);
+  }
+
   private readonly formStore = inject(PromptFormStore);
   private historyTrigger: HTMLElement | null = null;
   private replaceTrigger: HTMLElement | null = null;

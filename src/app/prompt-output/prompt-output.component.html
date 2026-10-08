@@ -1,10 +1,19 @@
-<section class="preview-workspace" aria-labelledby="preview-heading">
-  <header class="preview-toolbar">
-    <div>
-      <p class="eyebrow">ライブプレビュー</p>
-      <h2 id="preview-heading">完成イメージ</h2>
+<ng-template #toolsTemplate>
+  <div class="workspace-tools" role="group" aria-label="プロンプトの操作">
+    <div class="tab-title-field">
+      <label for="browser-tab-title">ブラウザタブのタイトル</label>
+      <span id="browser-tab-title-help">空欄の場合は質問内容から自動設定されます</span>
+      <input
+        id="browser-tab-title"
+        name="browserTabTitle"
+        type="text"
+        maxlength="120"
+        [value]="browserTabTitle()"
+        (input)="handleBrowserTabTitleInput($event)"
+        aria-describedby="browser-tab-title-help"
+        placeholder="任意のタイトル"
+      />
     </div>
-
     <div class="copy-actions">
       <button
         id="history-btn"
@@ -33,7 +42,7 @@
       <div class="import-export">
         <button
           type="button"
-          class="icon-button import-export-trigger"
+          class="secondary-button import-export-trigger"
           aria-label="インポートとエクスポート"
           aria-haspopup="menu"
           [attr.aria-expanded]="importExportOpen()"
@@ -42,6 +51,7 @@
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="M6 3v10m0 0-3-3m3 3 3-3M14 17V7m0 0-3 3m3-3 3 3" />
           </svg>
+          データ管理
         </button>
         @if (importExportOpen()) {
         <div class="import-export-menu" role="menu">
@@ -94,6 +104,19 @@
         {{ copySuccess() ? "プロンプトをクリップボードにコピーしました" : "" }}
       </span>
     </div>
+  </div>
+</ng-template>
+
+<section class="preview-workspace" aria-labelledby="preview-heading">
+  <header class="preview-toolbar">
+    <div>
+      <p class="eyebrow">ライブプレビュー</p>
+      <h2 id="preview-heading">完成イメージ</h2>
+    </div>
+
+    @if (!toolsInHeader()) {
+      <ng-container [ngTemplateOutlet]="toolsTemplate"></ng-container>
+    }
   </header>
 
   <div class="preview-scroll">
@@ -250,7 +273,7 @@
       </button>
     </header>
 
-    <p class="history-help">選択すると、現在のフォーム内容が履歴の状態に置き換わります。</p>
+    <p class="history-help">最新20件を保存します。選択すると、現在のフォーム内容が履歴の状態に置き換わります。</p>
 
     <div class="history-list">
       @if (historyItems().length === 0) {

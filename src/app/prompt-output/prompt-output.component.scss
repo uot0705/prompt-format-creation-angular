@@ -42,13 +42,13 @@
   font-size: 0.68rem;
   font-weight: 750;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .copy-actions {
   display: flex;
   align-items: center;
   flex: 0 0 auto;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -559,16 +559,12 @@
 }
 
 @media (max-width: 600px) {
+  .copy-actions { flex: 1 1 100%; min-width: 0; }
   .preview-toolbar,
   .preview-scroll {
     padding: var(--space-4);
   }
 
-  .copy-actions .secondary-button {
-    width: var(--control-height);
-    padding: 0;
-    font-size: 0;
-  }
 
   .replace-overlay {
     align-items: flex-end;
@@ -593,4 +589,8 @@
   .history-preview-tooltip {
     display: none;
   }
+}
+
+@media (max-width: 960px) {
+  .preview-toolbar { position: static; }
 }

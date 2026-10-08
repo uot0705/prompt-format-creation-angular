@@ -13,6 +13,18 @@ const stubDateNow = (): void => {
 };
 
 describe('PromptFormStore', () => {
+  it('レビュー指摘の出力内容はYES/NO判定とYES時の修正手順を指定する', () => {
+    const store = new PromptFormStore();
+    store.selectPreset('review');
+    expect(store.fields().map(field => field.title)).toEqual(['出力内容', 'Gitのレビュー指摘内容', '対象コード']);
+    expect(store.fields()[0].content).toBe(
+      'gitの指摘内容を全て確認して指摘内容を一つずつ「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+      '・指摘内容の概要を簡潔に教えて\n' +
+      '・指摘内容は修正した方がいいのかをYESorNOで、その理由も\n' +
+      '・YESの場合1: 現状のコードの修正箇所を箇条書きで書き出す 2: 修正箇所の修正コードを教えて'
+    );
+  });
+
   it('プリセット選択で質問とフィールドが更新される', () => {
     stubDateNow();
     const store = new PromptFormStore();

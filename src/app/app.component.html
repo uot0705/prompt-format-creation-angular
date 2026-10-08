@@ -12,10 +12,11 @@
         <p>構成を整えながら、完成形をリアルタイムで確認できます</p>
       </div>
     </div>
+    <ng-container [ngTemplateOutlet]="promptOutput.toolsTemplate"></ng-container>
   </header>
 
   <div class="workspace-grid">
     <app-prompt-form class="editor-panel"></app-prompt-form>
-    <app-prompt-output class="preview-panel"></app-prompt-output>
+    <app-prompt-output #promptOutput class="preview-panel" [toolsInHeader]="true"></app-prompt-output>
   </div>
 </main>

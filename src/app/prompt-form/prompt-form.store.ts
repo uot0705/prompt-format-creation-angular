@@ -9,6 +9,8 @@ export type PresetType =
   | 'review'
   | 'organize';
 
+export type FieldAddPosition = 'top' | 'bottom';
+
 export type Field = {
   id: number;
   title: string;
@@ -86,10 +88,13 @@ export class PromptFormStore {
     );
   }
 
-  // 新しいフィールドを末尾に追加する。
-  addField(title = '', content = ''): void {
+  // 指定位置に追加する。既存の呼び出しはこれまで通り末尾に追加する。
+  addField(title = '', content = '', position: FieldAddPosition = 'bottom'): number {
     const newField = this.createField(title, content);
-    this.fields.update((fields) => [...fields, newField]);
+    this.fields.update((fields) =>
+      position === 'top' ? [newField, ...fields] : [...fields, newField]
+    );
+    return newField.id;
   }
 
   // 指定したフィールドを削除する。
@@ -277,17 +282,16 @@ export class PromptFormStore {
       }
       case 'review': {
         this.mainQuestion.set(
-          '上司からのレビュー指摘内容を以下の「出力内容」に沿って回答してください'
+          'Gitのレビュー指摘内容を以下の「出力内容」に沿って回答してください'
         );
         this.addField(
           '出力内容',
-          '以下の内容を全て「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
-            '・上司からのレビュー指摘内容の概要\n' +
-            '・レビュー内容に「なぜ」修正した方がいいのかの詳細\n' +
-            '・現状のコードの修正箇所を箇条書きで書き出す\n' +
-            '・上記の修正箇所の修正コードを提供してください'
+          'gitの指摘内容を全て確認して指摘内容を一つずつ「エンジニア初心者でもわかりやすいように」丁寧に教えてください\n' +
+            '・指摘内容の概要を簡潔に教えて\n' +
+            '・指摘内容は修正した方がいいのかをYESorNOで、その理由も\n' +
+            '・YESの場合1: 現状のコードの修正箇所を箇条書きで書き出す 2: 修正箇所の修正コードを教えて'
         );
-        this.addField('上司からのレビュー指摘内容');
+        this.addField('Gitのレビュー指摘内容');
         this.addField('対象コード');
         break;
       }

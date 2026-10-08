@@ -83,29 +83,6 @@
   min-height: 10rem;
 }
 
-.tab-title-field {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: baseline;
-  column-gap: var(--space-3);
-  row-gap: var(--space-2);
-  margin-top: var(--space-4);
-
-  label {
-    font-size: 0.78rem;
-    font-weight: 650;
-  }
-
-  span {
-    color: var(--color-text-secondary);
-    font-size: 0.7rem;
-  }
-
-  input {
-    grid-column: 1 / -1;
-  }
-}
-
 .fields-heading {
   align-items: center;
 }
@@ -248,7 +225,6 @@
   gap: var(--space-2);
   width: 100%;
   min-height: var(--control-height);
-  margin-top: var(--space-3);
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.48);
@@ -285,5 +261,39 @@
 
   .section-description {
     display: none;
+  }
+}
+
+.field-add-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  .add-field-btn { flex: 1 1 10rem; width: auto; }
+}
+
+.add-position {
+  display: flex;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+
+  button {
+    min-height: 2.1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 650;
+  }
+
+  button.active {
+    background: white;
+    color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
   }
 }
